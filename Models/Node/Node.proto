@@ -1,0 +1,44 @@
+syntax = "proto3";
+package Collplex.Models.Node;
+
+message Node {
+
+	/* 子节点业务元素 */
+	message Service {
+
+		/* 子节点业务标识 Key */
+		string key = 1;
+
+		enum ServiceType {
+			BASIC = 0;
+			CUSTOM = 1;
+		}
+
+		/* 子节点业务类型 */
+		ServiceType type = 2;
+
+		/* 子节点友好名称 */
+		string name = 3;
+
+		/* 子节点所对应的该业务的完整URL */
+		string nodeUrl = 4;
+
+		/* UNIX 时间戳 首次注册的时间 */
+		int64 regTimestamp = 5;
+
+		/* UNIX 时间戳 过期时间。如果子节点超过规定的时间(Config/reg_interval)没有报告自己存活，即此业务暂时不能使用。 */
+		int64 expireTimestamp = 6;
+	}
+	repeated Service services = 1;
+
+	/* (内部使用的信息，不会给API接口序列化发出去) */
+	message Config {
+
+		/* 子节点业务的注册周期，此数据由 MySQL 缓存到 Redis */
+		int32 regInterval = 1;
+
+		/* 中心节点请求子节点的超时时间，此数据由 MySQL 缓存到 Redis */
+		int32 timeout = 2;
+	}
+	Config config = 2;
+}

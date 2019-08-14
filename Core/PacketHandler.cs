@@ -65,7 +65,7 @@ namespace Collplex.Core
                     ContractResolver = new Newtonsoft.Json.Serialization.CamelCasePropertyNamesContractResolver()
                 }
             );
-            iv = GetRandomString(16); // 生成随机初始化向量
+            iv = Convert.ToBase64String(GetRandomBytes(16)) ; // 生成随机初始化向量
             long timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds(); // 生成时间戳
             try
             {
@@ -87,23 +87,14 @@ namespace Collplex.Core
             return true;
         }
 
-        private static readonly char[] chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890".ToCharArray();
-        private static string GetRandomString(int size)
+        private static byte[] GetRandomBytes(int size)
         {
-            byte[] data = new byte[4 * size];
+            byte[] data = new byte[size];
             using (RNGCryptoServiceProvider crypto = new RNGCryptoServiceProvider())
             {
                 crypto.GetBytes(data);
             }
-            StringBuilder result = new StringBuilder(size);
-            for (int i = 0; i < size; i++)
-            {
-                var rnd = BitConverter.ToUInt32(data, i * 4);
-                var idx = rnd % chars.Length;
-
-                result.Append(chars[idx]);
-            }
-            return result.ToString();
+            return data;
         }
 
         public static bool ValidateRequest(ServiceRequest request)
@@ -193,7 +184,7 @@ namespace Collplex.Core
                 KeySize = 256,
                 BlockSize = 128,
                 Key = Encoding.UTF8.GetBytes(key),
-                IV = Encoding.UTF8.GetBytes(iv),
+                IV = Convert.FromBase64String(iv),
                 Padding = PaddingMode.PKCS7,
                 Mode = CipherMode.CBC
             };
@@ -214,7 +205,7 @@ namespace Collplex.Core
                 KeySize = 256,
                 BlockSize = 128,
                 Key = Encoding.UTF8.GetBytes(key),
-                IV = Encoding.UTF8.GetBytes(iv),
+                IV = Convert.FromBase64String(iv),
                 Padding = PaddingMode.PKCS7,
                 Mode = CipherMode.CBC
             };

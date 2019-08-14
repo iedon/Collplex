@@ -1,7 +1,7 @@
-﻿using Collplex.Models.Node;
-using Google.Protobuf;
+﻿using Google.Protobuf;
 using System;
 using System.Threading.Tasks;
+using Collplex.Models.Node;
 
 namespace Collplex.Core
 {

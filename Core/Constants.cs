@@ -10,6 +10,8 @@ namespace Collplex.Core
     // 此静态类的作用是在内存中维护一份配置供程序的各个模块使用
     public static class Constants
     {
+        public static string JsonContentType = "application/json";
+
         /* ---------- 以下这些属性都在初始化的时候设置 ---------- */
 
         // 本程序集名称(项目名称, 不是全称)

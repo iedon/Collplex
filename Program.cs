@@ -16,7 +16,7 @@ namespace Collplex
     {
         public static async Task Main(string[] args)
         {
-            // 首先初始化 NLOG 以便捕捉并记录所有启动过程中的错误
+            // 首先初始化一个 NLOG 以便捕捉并记录所有启动过程中的错误，程序退出时销毁
             var logger = NLog.Web.NLogBuilder.ConfigureNLog("nlog.config").GetCurrentClassLogger();
             try
             {

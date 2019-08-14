@@ -14,16 +14,9 @@ namespace Collplex.Controllers
     {
         public ErrorController(MainContext context) : base(context) {}
 
-        // 服务端发生未知异常
-        [Route("/error/exception")]
-        public OkObjectResult FireServerException()
-        {
-            return Ok(PacketHandler.MakeResponse(ResponseCodeType.SERVER_EXCEPTION));
-        }
-
         // 其他的响应基本都是因为未注册的路由(404),403,502 等
         [Route("/error/{statusCode}")]
-        public OkObjectResult FireStatus(int? statusCode)
+        public OkObjectResult HookGlobalErrorResponse(int? statusCode)
         {
             if (statusCode == null) statusCode = 500;
             switch (statusCode) {

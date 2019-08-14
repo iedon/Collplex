@@ -6,7 +6,6 @@ using System.Text;
 using System.Threading.Tasks;
 using Collplex.Models;
 using Collplex.Models.Node;
-using Newtonsoft.Json;
 
 namespace Collplex.Core
 {
@@ -27,13 +26,7 @@ namespace Collplex.Core
             if (!PacketHandler.MakeNodePacketOutbound(requestData, clientId, clientSecret, out NodePacketOutbound packetOutbound, out string iv))
                 return null;
 
-            using (var content = new StringContent(
-                    JsonConvert.SerializeObject(packetOutbound, Formatting.None, new JsonSerializerSettings
-                        {
-                            ContractResolver = new Newtonsoft.Json.Serialization.CamelCasePropertyNamesContractResolver()
-                        }),
-                    Encoding.UTF8, "application/json")
-                  )
+            using (var content = new StringContent(Utils.JsonSerialize(packetOutbound), Encoding.UTF8, Constants.JsonContentType))
             {
                 using (var response = await Client.PostAsync(nodeServiceUrl, content))
                 {
@@ -44,13 +37,13 @@ namespace Collplex.Core
                     try
                     {
                         string httpBody = await response.Content.ReadAsStringAsync();
-                        ResponsePacket responsePacket = JsonConvert.DeserializeObject<ResponsePacket>(httpBody);
+                        ResponsePacket responsePacket = Utils.JsonDeSerialize<ResponsePacket>(httpBody);
                         if (responsePacket.Code != ResponseCodeType.OK)
                         {
                             return null;
                         }
-                        string decryptedData = PacketHandler.CommonDecrypt(responsePacket.Data.ToString(), clientSecret, iv);
-                        return JsonConvert.DeserializeObject<object>(decryptedData);
+                        string decryptedData = Utils.CommonDecrypt(responsePacket.Data.ToString(), clientSecret, iv);
+                        return Utils.JsonDeSerialize<object>(decryptedData);
                     }
                     catch
                     {

@@ -1,9 +1,6 @@
-﻿using Collplex.Models;
+﻿using System;
+using Collplex.Models;
 using Collplex.Models.Node;
-using System;
-using System.Text;
-using System.Security.Cryptography;
-using Newtonsoft.Json;
 
 namespace Collplex.Core
 {
@@ -60,16 +57,12 @@ namespace Collplex.Core
 
         public static bool MakeNodePacketOutbound(object serializable, string clientId, string clientSecret, out NodePacketOutbound packetOutbound, out string iv)
         {
-            string rawData = JsonConvert.SerializeObject(serializable, Formatting.None,
-                new JsonSerializerSettings {
-                    ContractResolver = new Newtonsoft.Json.Serialization.CamelCasePropertyNamesContractResolver()
-                }
-            );
-            iv = Convert.ToBase64String(GetRandomBytes(16)) ; // 生成随机初始化向量
+            string rawData = Utils.JsonSerialize(serializable);
+            iv = Convert.ToBase64String(Utils.GetRandomBytes(16)) ; // 生成随机初始化向量
             long timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds(); // 生成时间戳
             try
             {
-                string encryptedData = CommonEncrypt(rawData, clientSecret, iv);
+                string encryptedData = Utils.CommonEncrypt(rawData, clientSecret, iv);
                 string signature = MakeSignature(encryptedData, clientId, clientSecret, timestamp);
                 packetOutbound = new NodePacketOutbound
                 {
@@ -85,16 +78,6 @@ namespace Collplex.Core
                 return false;
             }
             return true;
-        }
-
-        private static byte[] GetRandomBytes(int size)
-        {
-            byte[] data = new byte[size];
-            using (RNGCryptoServiceProvider crypto = new RNGCryptoServiceProvider())
-            {
-                crypto.GetBytes(data);
-            }
-            return data;
         }
 
         public static bool ValidateRequest(ServiceRequest request)
@@ -131,18 +114,8 @@ namespace Collplex.Core
              *          -> 使用 clientId + clientSecret 作密钥 对处理后的数据进行 HmacSHA256 签名 -> 将签名后的 base64 串 + UNIX 时间戳 再次进行 SHA256 哈希
              *          -> 【得到最终签名(base64)】
              */
-            string hmacSha256Sign = HmacSHA256Hash(encryptedData, clientId + clientSecret); // 第一轮：HmacSHA256 签名
-            return SHA256Hash(hmacSha256Sign + timestamp); // 第二轮：SHA256 哈希
-        }
-
-        public static string CommonEncrypt(string rawData, string clientSecret, string iv)
-        {
-            return Aes256CBCEncrypt(rawData, clientSecret, iv);
-        }
-
-        public static string CommonDecrypt(string rawData, string clientSecret, string iv)
-        {
-            return Aes256CBCDecrypt(rawData, clientSecret, iv);
+            string hmacSha256Sign = Utils.HmacSHA256Hash(encryptedData, clientId + clientSecret); // 第一轮：HmacSHA256 签名
+            return Utils.SHA256Hash(hmacSha256Sign + timestamp); // 第二轮：SHA256 哈希
         }
 
         public static string DecryptNodePacketInbound(NodePacketInbound request, string clientSecret)
@@ -156,7 +129,7 @@ namespace Collplex.Core
             {
                 string signature = MakeSignature(request.Data, request.ClientId, clientSecret, request.Timestamp);
                 if (signature != request.Signature) return null;
-                string ret = CommonDecrypt(request.Data, clientSecret, request.Iv);
+                string ret = Utils.CommonDecrypt(request.Data, clientSecret, request.Iv);
                 return ret;
             }
             catch
@@ -166,82 +139,6 @@ namespace Collplex.Core
         }
 
         public static string MakeNodeEncryptedPayload(object serializable, string key, string iv)
-            => CommonEncrypt(
-                    JsonConvert.SerializeObject(serializable,
-                        Formatting.None,
-                        new JsonSerializerSettings {
-                            ContractResolver = new Newtonsoft.Json.Serialization.CamelCasePropertyNamesContractResolver()
-                        }
-                    ),
-                    key,
-                    iv
-               );
-
-        private static string Aes256CBCEncrypt(string plainText, string key, string iv)
-        {
-            var aes = new AesCryptoServiceProvider
-            {
-                KeySize = 256,
-                BlockSize = 128,
-                Key = Encoding.UTF8.GetBytes(key),
-                IV = Convert.FromBase64String(iv),
-                Padding = PaddingMode.PKCS7,
-                Mode = CipherMode.CBC
-            };
-
-            var crypto = aes.CreateEncryptor(aes.Key, aes.IV);
-            var rawBytes = Encoding.UTF8.GetBytes(plainText);
-            byte[] encrypted = crypto.TransformFinalBlock(rawBytes, 0, rawBytes.Length);
-
-            crypto.Dispose();
-            aes.Dispose();
-            return Convert.ToBase64String(encrypted);
-        }
-
-        private static string Aes256CBCDecrypt(string base64encoded, string key, string iv)
-        {
-            var aes = new AesCryptoServiceProvider
-            {
-                KeySize = 256,
-                BlockSize = 128,
-                Key = Encoding.UTF8.GetBytes(key),
-                IV = Convert.FromBase64String(iv),
-                Padding = PaddingMode.PKCS7,
-                Mode = CipherMode.CBC
-            };
-
-            var crypto = aes.CreateDecryptor(aes.Key, aes.IV);
-            var rawBytes = Convert.FromBase64String(base64encoded);
-            byte[] decrypted = crypto.TransformFinalBlock(rawBytes, 0, rawBytes.Length);
-
-            crypto.Dispose();
-            aes.Dispose();
-            return Encoding.UTF8.GetString(decrypted);
-        }
-
-        private static string HmacSHA256Hash(string message, string secret)
-        {
-            secret = secret ?? "";
-            var encoding = new UTF8Encoding();
-            byte[] keyByte = encoding.GetBytes(secret);
-            byte[] messageBytes = encoding.GetBytes(message);
-            using (var hmacsha256 = new HMACSHA256(keyByte))
-            {
-                byte[] hashmessage = hmacsha256.ComputeHash(messageBytes);
-                return Convert.ToBase64String(hashmessage);
-            }
-        }
-
-        private static string SHA256Hash(string message)
-        {
-            var encoding = new UTF8Encoding();
-            byte[] messageBytes = encoding.GetBytes(message);
-            using (var sha256hash = SHA256.Create())
-            {
-                byte[] hashmessage = sha256hash.ComputeHash(messageBytes);
-                return Convert.ToBase64String(hashmessage);
-            }
-        }
-
+            => Utils.CommonEncrypt(Utils.JsonSerialize(serializable), key, iv);
     }
 }

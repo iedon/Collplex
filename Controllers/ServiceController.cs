@@ -43,7 +43,7 @@ namespace Collplex.Controllers
             Node.Types.Service service = null;
             foreach (Node.Types.Service svc in node.Services)
             {
-                if (svc.Key == request.Key)
+                if (svc.Key == request.Key.ToLower())
                 {
                     service = svc;
                     break;

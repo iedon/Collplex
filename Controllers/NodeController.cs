@@ -1,15 +1,12 @@
-﻿using Collplex.Core;
-using Collplex.Models;
-using Google.Protobuf;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Collplex.Core;
+using Collplex.Models;
 using Collplex.Models.Node;
-using Microsoft.Extensions.Configuration;
-using Newtonsoft.Json;
 
 namespace Collplex.Controllers
 {
@@ -52,7 +49,7 @@ namespace Collplex.Controllers
                     InboundRegisterRequest payload = null;
                     try
                     {
-                        payload = JsonConvert.DeserializeObject<InboundRegisterRequest>(jsonPayload);
+                        payload = Utils.JsonDeSerialize<InboundRegisterRequest>(jsonPayload);
                     }
                     catch
                     {
@@ -65,7 +62,7 @@ namespace Collplex.Controllers
                     InboundDestroyRequest payload = null;
                     try
                     {
-                        payload = JsonConvert.DeserializeObject<InboundDestroyRequest>(jsonPayload);
+                        payload = Utils.JsonDeSerialize<InboundDestroyRequest>(jsonPayload);
                     }
                     catch
                     {

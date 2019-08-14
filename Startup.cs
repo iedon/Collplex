@@ -1,13 +1,18 @@
-﻿using System.Net;
+﻿using System;
+using System.Net;
 using System.Reflection;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 using StackExchange.Redis;
 using Collplex.Core;
+using Collplex.Models;
 
 /* Easy University Service Integration */
 /*      Copyright (C) 2019 iEdon.      */
@@ -77,17 +82,36 @@ namespace Collplex
         }
 
         //                                             IHostEnvironment env
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILogger<Startup> logger)
         {
             app.UseForwardedHeaders();
             //app.UseRouting();
-            // 将服务端异常与错误页面的处理重定向到 /Error，以便响应按照自己的格式
-            app.UseExceptionHandler("/error/exception");
+            
+            // 设置全局异常捕获中间件
+            app.UseExceptionHandler(appError =>
+            {
+                appError.Run(async context =>
+                {
+                    context.Response.StatusCode = StatusCodes.Status200OK;
+                    context.Response.ContentType = Constants.JsonContentType;
+
+                    var contextFeature = context.Features.Get<IExceptionHandlerFeature>();
+                    if (contextFeature != null)
+                    {
+                        logger.LogError("Global exception captured: " + contextFeature.Error.Message + Environment.NewLine + contextFeature.Error.StackTrace);
+                        await context.Response.WriteAsync(Utils.JsonSerialize(PacketHandler.MakeResponse(ResponseCodeType.SERVER_EXCEPTION)));
+                    }
+                });
+            });
+
+            // 将其他错误页面的处理重定向到 /Error，以便响应按照统一格式
             app.UseStatusCodePagesWithReExecute("/error/{0}");
+
             /*app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllerRoute("default", "{controller=Default}/{action=Index}/{id?}");
             });*/
+
             app.UseMvc(routes => // remove this for 3.0
             {
                 routes.MapRoute(

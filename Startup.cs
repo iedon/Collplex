@@ -1,12 +1,13 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using System.Net;
+using System.Reflection;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
-using System.Net;
-using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Hosting;
 using Microsoft.EntityFrameworkCore;
-using Collplex.Core;
 using StackExchange.Redis;
+using Collplex.Core;
 
 /* Easy University Service Integration */
 /*      Copyright (C) 2019 iEdon.      */
@@ -56,7 +57,14 @@ namespace Collplex
             Constants.AcquireLockTimeoutSeconds = RedisSettings.GetValue<uint>("AcquireLockTimeoutSeconds");
             Constants.LockTimeoutSeconds = RedisSettings.GetValue<uint>("LockTimeoutSeconds");
 
-            Constants.NodeRequestInboundAntiReplaySeconds = Configuration.GetValue<uint>("NodeRequestInboundAntiReplaySeconds");
+            // 配置其他信息
+            Constants.NodePacketInboundAntiReplaySeconds = Configuration.GetValue<uint>("NodePacketInboundAntiReplaySeconds");
+            Constants.AppName = Assembly.GetEntryAssembly().GetName().Name;
+            Constants.AppVersion = Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
+            Constants.NodeHttpClientUserAgent = Constants.AppName + "/" + Constants.AppVersion;
+
+            // 注入子节点访问客户端
+            services.AddHttpClient<NodeHttpClient>();
 
             // 注入 MVC remove this for 3.0
             services.AddMvc()

@@ -18,19 +18,21 @@ namespace Collplex.Controllers
         [Route("/error/exception")]
         public OkObjectResult FireServerException()
         {
-            return Ok(PacketHandler.GenerateResponse(ResponseCodeType.SERVER_EXCEPTION));
+            return Ok(PacketHandler.MakeResponse(ResponseCodeType.SERVER_EXCEPTION));
         }
 
         // 其他的响应基本都是因为未注册的路由(404),403,502 等
         [Route("/error/{statusCode}")]
         public OkObjectResult FireStatus(int? statusCode)
         {
+            if (statusCode == null) statusCode = 500;
             switch (statusCode) {
-                default: case 500: return Ok(PacketHandler.GenerateResponse(ResponseCodeType.SERVER_EXCEPTION));
-                case 403: return Ok(PacketHandler.GenerateResponse(ResponseCodeType.FORBIDDEN));
-                case 404: return Ok(PacketHandler.GenerateResponse(ResponseCodeType.NOT_FOUND));
-                case 502: return Ok(PacketHandler.GenerateResponse(ResponseCodeType.BAD_GATEWAY));
-                case 503: return Ok(PacketHandler.GenerateResponse(ResponseCodeType.SERVICE_UNAVAILABLE));
+                default: case 500: return Ok(PacketHandler.MakeResponse(ResponseCodeType.SERVER_EXCEPTION));
+                case 400: return Ok(PacketHandler.MakeResponse(ResponseCodeType.BAD_REQUEST));
+                case 403: return Ok(PacketHandler.MakeResponse(ResponseCodeType.FORBIDDEN));
+                case 404: return Ok(PacketHandler.MakeResponse(ResponseCodeType.NOT_FOUND));
+                case 502: return Ok(PacketHandler.MakeResponse(ResponseCodeType.BAD_GATEWAY));
+                case 503: return Ok(PacketHandler.MakeResponse(ResponseCodeType.SERVICE_UNAVAILABLE));
             }
         }
     }

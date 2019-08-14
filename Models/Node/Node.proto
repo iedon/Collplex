@@ -34,11 +34,14 @@ message Node {
 	/* (内部使用的信息，不会给API接口序列化发出去) */
 	message Config {
 
+		/* 子节点密钥，此数据由 MySQL 缓存到 Redis */
+		string clientSecret = 1;
+
 		/* 子节点业务的注册周期，此数据由 MySQL 缓存到 Redis */
-		int32 regInterval = 1;
+		int32 regInterval = 2;
 
 		/* 中心节点请求子节点的超时时间，此数据由 MySQL 缓存到 Redis */
-		int32 timeout = 2;
+		int32 timeout = 3;
 	}
 	Config config = 2;
 }

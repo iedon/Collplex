@@ -23,29 +23,29 @@ namespace Collplex.Controllers
 
         [Route("/node")]
         public ResponsePacket RegisterService()
-            => PacketHandler.GenerateResponse(ResponseCodeType.METHOD_NOT_ALLOWED);
+            => PacketHandler.MakeResponse(ResponseCodeType.METHOD_NOT_ALLOWED);
 
         /*
          * 子节请求互入口
          */
         [Route("/node")]
         [HttpPost]
-        public async Task<ResponsePacket> NodeMain([FromBody] NodeRequestInbound request)
+        public async Task<ResponsePacket> NodeMain([FromBody] NodePacketInbound request)
         {
-            if (!PacketHandler.ValidateNodeRequestInbound(request))
-                return PacketHandler.GenerateResponse(ResponseCodeType.BAD_REQUEST);
+            if (!PacketHandler.ValidateNodePacketInbound(request))
+                return PacketHandler.MakeResponse(ResponseCodeType.BAD_REQUEST);
 
             var requestCollege = await context.Colleges.Where(college => college.ClientId == request.ClientId)
                 .Select(college => college)
                 .FirstOrDefaultAsync();
             if (requestCollege == null)
-                return PacketHandler.GenerateResponse(ResponseCodeType.NODE_INVALID_CLIENT_ID_OR_SECRET);
+                return PacketHandler.MakeResponse(ResponseCodeType.NODE_INVALID_CLIENT_ID_OR_SECRET);
 
-            string jsonPayload = PacketHandler.DecryptNodeRequestInbound(request, requestCollege.ClientSecret);
+            string jsonPayload = PacketHandler.DecryptNodePacketInbound(request, requestCollege.ClientSecret);
             if (jsonPayload == null)
-                return PacketHandler.GenerateResponse(ResponseCodeType.BAD_REQUEST);
+                return PacketHandler.MakeResponse(ResponseCodeType.BAD_REQUEST);
 
-            NodeActionEnum action = (NodeActionEnum)Enum.Parse(typeof(NodeActionEnum), request.Action.ToUpper());
+            NodeActionEnum action = Enum.Parse<NodeActionEnum>(request.Action.ToUpper());
             switch (action) {
                 case NodeActionEnum.REGISTER:
                 {
@@ -56,7 +56,7 @@ namespace Collplex.Controllers
                     }
                     catch
                     {
-                        return PacketHandler.GenerateResponse(ResponseCodeType.INVALID_BODY);
+                        return PacketHandler.MakeResponse(ResponseCodeType.INVALID_BODY);
                     }
                     return await RegisterService(requestCollege, payload);
                 }
@@ -69,13 +69,13 @@ namespace Collplex.Controllers
                     }
                     catch
                     {
-                        return PacketHandler.GenerateResponse(ResponseCodeType.INVALID_BODY);
+                        return PacketHandler.MakeResponse(ResponseCodeType.INVALID_BODY);
                     }
                     return await DestroyService(requestCollege, payload);
                 }
                 case NodeActionEnum.LIST:
                     return await ListServices(request, requestCollege);
-                default: return PacketHandler.GenerateResponse(ResponseCodeType.BAD_REQUEST);
+                default: return PacketHandler.MakeResponse(ResponseCodeType.BAD_REQUEST);
             }
         }
 
@@ -87,22 +87,31 @@ namespace Collplex.Controllers
         private async Task<ResponsePacket> RegisterService(Colleges college, InboundRegisterRequest data)
         {
             if (data == null || data.Service == null)
-                return PacketHandler.GenerateResponse(ResponseCodeType.INVALID_BODY);
+                return PacketHandler.MakeResponse(ResponseCodeType.INVALID_BODY);
 
             // 锁定节点，可以有效避免并发注册的问题
             string nodeLock = await NodeHelper.LockNode(college.ClientId);
             if (nodeLock == null)
-                return PacketHandler.GenerateResponse(ResponseCodeType.NODE_LOCK_TIMEOUT);
+                return PacketHandler.MakeResponse(ResponseCodeType.NODE_LOCK_TIMEOUT);
 
             try
             {
                 Node node = await NodeHelper.GetNode(college.ClientId);
-                if (node == null) node = new Node(); // 注册中心从未有过记录，为其新增记录
+                if (node == null) // 注册中心从未有过记录，为其新增记录
+                {
+                    node = new Node
+                    {
+                        Config = new Node.Types.Config
+                        {
+                            ClientSecret = college.ClientSecret
+                        }
+                    };
+                }
 
                 foreach (var serviceToRegister in data.Service) // 用户提交的 Service
                 {
                     if (serviceToRegister.Key == null)
-                        return PacketHandler.GenerateResponse(ResponseCodeType.INVALID_BODY);
+                        return PacketHandler.MakeResponse(ResponseCodeType.INVALID_BODY);
 
                     serviceToRegister.Key = serviceToRegister.Key.ToLower(); // 业务 Key 强制小写
 
@@ -127,7 +136,7 @@ namespace Collplex.Controllers
 
                         // 自定义业务超出数量限制
                         if (node.Services.Count + Enum.GetValues(typeof(BaseServiceEnum)).Length >= college.MaxUrls)
-                            return PacketHandler.GenerateResponse(ResponseCodeType.NODE_REG_CUSTOM_URL_LIMIT);
+                            return PacketHandler.MakeResponse(ResponseCodeType.NODE_REG_CUSTOM_SVC_LIMIT);
 
                         node.Services.Add(service);
                     }
@@ -145,8 +154,8 @@ namespace Collplex.Controllers
                 node.Config.Timeout = college.Timeout;
 
                 if (!await NodeHelper.SetNode(college.ClientId, node))
-                    return PacketHandler.GenerateResponse(ResponseCodeType.NODE_OPERATION_FAILED);
-                return PacketHandler.GenerateResponse(ResponseCodeType.OK);
+                    return PacketHandler.MakeResponse(ResponseCodeType.NODE_OPERATION_FAILED);
+                return PacketHandler.MakeResponse(ResponseCodeType.OK);
             }
             finally
             {
@@ -162,23 +171,23 @@ namespace Collplex.Controllers
         private async Task<ResponsePacket> DestroyService(Colleges college, InboundDestroyRequest data)
         {
             if (data == null || data.Key == null)
-                return PacketHandler.GenerateResponse(ResponseCodeType.INVALID_BODY);
+                return PacketHandler.MakeResponse(ResponseCodeType.INVALID_BODY);
 
             // 锁定节点，可以有效避免并发注册的问题
             string nodeLock = await NodeHelper.LockNode(college.ClientId);
             if (nodeLock == null)
-                return PacketHandler.GenerateResponse(ResponseCodeType.NODE_LOCK_TIMEOUT);
+                return PacketHandler.MakeResponse(ResponseCodeType.NODE_LOCK_TIMEOUT);
 
             try
             {
                 Node node = await NodeHelper.GetNode(college.ClientId);
                 if (node == null) // 本身就没有注册任何业务，直接返回空
-                    return PacketHandler.GenerateResponse(ResponseCodeType.OK);
+                    return PacketHandler.MakeResponse(ResponseCodeType.OK);
 
                 foreach (var key in data.Key)
                 {
                     if (key == null)
-                        return PacketHandler.GenerateResponse(ResponseCodeType.INVALID_BODY);
+                        return PacketHandler.MakeResponse(ResponseCodeType.INVALID_BODY);
 
                     Node.Types.Service service = null;
                     foreach (var currentService in node.Services) // 在注册中心中已经存在的 Service
@@ -195,8 +204,8 @@ namespace Collplex.Controllers
                     node.Services.Remove(service); // 销毁业务
                 }
                 if (!await NodeHelper.SetNode(college.ClientId, node))
-                    return PacketHandler.GenerateResponse(ResponseCodeType.NODE_OPERATION_FAILED);
-                return PacketHandler.GenerateResponse(ResponseCodeType.OK);
+                    return PacketHandler.MakeResponse(ResponseCodeType.NODE_OPERATION_FAILED);
+                return PacketHandler.MakeResponse(ResponseCodeType.OK);
             }
             finally
             {
@@ -209,11 +218,11 @@ namespace Collplex.Controllers
          *  [使用用户的 iv 加密返回]
          *  子节点获取当前所注册的业务信息
          */
-        private async Task<ResponsePacket> ListServices(NodeRequestInbound request, Colleges college)
+        private async Task<ResponsePacket> ListServices(NodePacketInbound request, Colleges college)
         {
             Node node = await NodeHelper.GetNode(college.ClientId);
-            if (node == null) node = new Node(); // 没有注册过服务或找不到则不反回 null，而是一个空的服务集合对象
-            return PacketHandler.GenerateResponse(ResponseCodeType.OK, PacketHandler.MakeNodeEncryptedPayload(node.Services, college.ClientSecret, request.Iv));
+            if (node == null) node = new Node(); // 没有找到节点，就建一个空的临时对象，用于序列化空服务响应
+            return PacketHandler.MakeResponse(ResponseCodeType.OK, PacketHandler.MakeNodeEncryptedPayload(node.Services, college.ClientSecret, request.Iv));
         }
     }
 }

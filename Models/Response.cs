@@ -18,12 +18,15 @@ namespace Collplex.Models
         INVALID_BODY = 1007,
         NODE_INVALID_CLIENT_ID_OR_SECRET = 2000,
         NODE_OPERATION_FAILED = 2001,
-        NODE_REG_CUSTOM_URL_LIMIT = 2002,
+        NODE_REG_CUSTOM_SVC_LIMIT = 2002,
         NODE_LOCK_TIMEOUT = 2003,
-        SVC_INVALID_CLIENT_ID = 3000
+        NODE_RESPONSE_ERROR = 2004,
+        NODE_RESPONSE_TIMEDOUT = 2005,
+        SVC_INVALID_CLIENT_ID = 3000,
+        SVC_NOT_FOUND = 3001
     }
 
-    public struct ResponsePacket
+    public class ResponsePacket
     {
         public ResponseCodeType Code;
         public string Message;

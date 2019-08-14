@@ -1,0 +1,23 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace Collplex.Models.Node
+{
+    /* 此类是本中心节点向子节点发送的请求 */
+    public class NodePacketOutbound
+    {
+        // 中心节点请求签名
+        public string Signature;
+
+        // 中心节点响应时间戳
+        public long Timestamp;
+
+        // 中心节点加密初始化向量
+        public string Iv;
+
+        // 请求数据
+        public string Data;
+    }
+}

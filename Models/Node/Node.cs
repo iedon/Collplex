@@ -24,21 +24,21 @@ namespace Collplex.Models.Node {
     static NodeReflection() {
       byte[] descriptorData = global::System.Convert.FromBase64String(
           string.Concat(
-            "CgpOb2RlLnByb3RvEhRDb2xsUGxleC5Nb2RlbHMuTm9kZSLqAgoETm9kZRI0",
-            "CghzZXJ2aWNlcxgBIAMoCzIiLkNvbGxQbGV4Lk1vZGVscy5Ob2RlLk5vZGUu",
-            "U2VydmljZRIxCgZjb25maWcYAiABKAsyIS5Db2xsUGxleC5Nb2RlbHMuTm9k",
+            "CgpOb2RlLnByb3RvEhRDb2xscGxleC5Nb2RlbHMuTm9kZSKAAwoETm9kZRI0",
+            "CghzZXJ2aWNlcxgBIAMoCzIiLkNvbGxwbGV4Lk1vZGVscy5Ob2RlLk5vZGUu",
+            "U2VydmljZRIxCgZjb25maWcYAiABKAsyIS5Db2xscGxleC5Nb2RlbHMuTm9k",
             "ZS5Ob2RlLkNvbmZpZxrIAQoHU2VydmljZRILCgNrZXkYASABKAkSPAoEdHlw",
-            "ZRgCIAEoDjIuLkNvbGxQbGV4Lk1vZGVscy5Ob2RlLk5vZGUuU2VydmljZS5T",
+            "ZRgCIAEoDjIuLkNvbGxwbGV4Lk1vZGVscy5Ob2RlLk5vZGUuU2VydmljZS5T",
             "ZXJ2aWNlVHlwZRIMCgRuYW1lGAMgASgJEg8KB25vZGVVcmwYBCABKAkSFAoM",
             "cmVnVGltZXN0YW1wGAUgASgDEhcKD2V4cGlyZVRpbWVzdGFtcBgGIAEoAyIk",
-            "CgtTZXJ2aWNlVHlwZRIJCgVCQVNJQxAAEgoKBkNVU1RPTRABGi4KBkNvbmZp",
-            "ZxITCgtyZWdJbnRlcnZhbBgBIAEoBRIPCgd0aW1lb3V0GAIgASgFYgZwcm90",
-            "bzM="));
+            "CgtTZXJ2aWNlVHlwZRIJCgVCQVNJQxAAEgoKBkNVU1RPTRABGkQKBkNvbmZp",
+            "ZxIUCgxjbGllbnRTZWNyZXQYASABKAkSEwoLcmVnSW50ZXJ2YWwYAiABKAUS",
+            "DwoHdGltZW91dBgDIAEoBWIGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
             new pbr::GeneratedClrTypeInfo(typeof(global::Collplex.Models.Node.Node), global::Collplex.Models.Node.Node.Parser, new[]{ "Services", "Config" }, null, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::Collplex.Models.Node.Node.Types.Service), global::Collplex.Models.Node.Node.Types.Service.Parser, new[]{ "Key", "Type", "Name", "NodeUrl", "RegTimestamp", "ExpireTimestamp" }, null, new[]{ typeof(global::Collplex.Models.Node.Node.Types.Service.Types.ServiceType) }, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Collplex.Models.Node.Node.Types.Config), global::Collplex.Models.Node.Node.Types.Config.Parser, new[]{ "RegInterval", "Timeout" }, null, null, null, null)})
+            new pbr::GeneratedClrTypeInfo(typeof(global::Collplex.Models.Node.Node.Types.Config), global::Collplex.Models.Node.Node.Types.Config.Parser, new[]{ "ClientSecret", "RegInterval", "Timeout" }, null, null, null, null)})
           }));
     }
     #endregion
@@ -318,7 +318,7 @@ namespace Collplex.Models.Node {
         public const int ExpireTimestampFieldNumber = 6;
         private long expireTimestamp_;
         /// <summary>
-        /// UNIX 时间戳 过期时间。如果子节点超过规定的时间(Colleges/reg_interval)没有报告自己存活，即此业务暂时不能使用。 
+        /// UNIX 时间戳 过期时间。如果子节点超过规定的时间(Config/reg_interval)没有报告自己存活，即此业务暂时不能使用。 
         /// </summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         public long ExpireTimestamp {
@@ -532,6 +532,7 @@ namespace Collplex.Models.Node {
 
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         public Config(Config other) : this() {
+          clientSecret_ = other.clientSecret_;
           regInterval_ = other.regInterval_;
           timeout_ = other.timeout_;
           _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
@@ -542,9 +543,26 @@ namespace Collplex.Models.Node {
           return new Config(this);
         }
 
+        /// <summary>Field number for the "clientSecret" field.</summary>
+        public const int ClientSecretFieldNumber = 1;
+        private string clientSecret_ = "";
+        /// <summary>
+        /// 子节点密钥，此数据由 MySQL 缓存到 Redis 
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        public string ClientSecret {
+          get { return clientSecret_; }
+          set {
+            clientSecret_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+          }
+        }
+
         /// <summary>Field number for the "regInterval" field.</summary>
-        public const int RegIntervalFieldNumber = 1;
+        public const int RegIntervalFieldNumber = 2;
         private int regInterval_;
+        /// <summary>
+        /// 子节点业务的注册周期，此数据由 MySQL 缓存到 Redis 
+        /// </summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         public int RegInterval {
           get { return regInterval_; }
@@ -554,8 +572,11 @@ namespace Collplex.Models.Node {
         }
 
         /// <summary>Field number for the "timeout" field.</summary>
-        public const int TimeoutFieldNumber = 2;
+        public const int TimeoutFieldNumber = 3;
         private int timeout_;
+        /// <summary>
+        /// 中心节点请求子节点的超时时间，此数据由 MySQL 缓存到 Redis 
+        /// </summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         public int Timeout {
           get { return timeout_; }
@@ -577,6 +598,7 @@ namespace Collplex.Models.Node {
           if (ReferenceEquals(other, this)) {
             return true;
           }
+          if (ClientSecret != other.ClientSecret) return false;
           if (RegInterval != other.RegInterval) return false;
           if (Timeout != other.Timeout) return false;
           return Equals(_unknownFields, other._unknownFields);
@@ -585,6 +607,7 @@ namespace Collplex.Models.Node {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         public override int GetHashCode() {
           int hash = 1;
+          if (ClientSecret.Length != 0) hash ^= ClientSecret.GetHashCode();
           if (RegInterval != 0) hash ^= RegInterval.GetHashCode();
           if (Timeout != 0) hash ^= Timeout.GetHashCode();
           if (_unknownFields != null) {
@@ -600,12 +623,16 @@ namespace Collplex.Models.Node {
 
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         public void WriteTo(pb::CodedOutputStream output) {
+          if (ClientSecret.Length != 0) {
+            output.WriteRawTag(10);
+            output.WriteString(ClientSecret);
+          }
           if (RegInterval != 0) {
-            output.WriteRawTag(8);
+            output.WriteRawTag(16);
             output.WriteInt32(RegInterval);
           }
           if (Timeout != 0) {
-            output.WriteRawTag(16);
+            output.WriteRawTag(24);
             output.WriteInt32(Timeout);
           }
           if (_unknownFields != null) {
@@ -616,6 +643,9 @@ namespace Collplex.Models.Node {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         public int CalculateSize() {
           int size = 0;
+          if (ClientSecret.Length != 0) {
+            size += 1 + pb::CodedOutputStream.ComputeStringSize(ClientSecret);
+          }
           if (RegInterval != 0) {
             size += 1 + pb::CodedOutputStream.ComputeInt32Size(RegInterval);
           }
@@ -632,6 +662,9 @@ namespace Collplex.Models.Node {
         public void MergeFrom(Config other) {
           if (other == null) {
             return;
+          }
+          if (other.ClientSecret.Length != 0) {
+            ClientSecret = other.ClientSecret;
           }
           if (other.RegInterval != 0) {
             RegInterval = other.RegInterval;
@@ -650,11 +683,15 @@ namespace Collplex.Models.Node {
               default:
                 _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
                 break;
-              case 8: {
-                RegInterval = input.ReadInt32();
+              case 10: {
+                ClientSecret = input.ReadString();
                 break;
               }
               case 16: {
+                RegInterval = input.ReadInt32();
+                break;
+              }
+              case 24: {
                 Timeout = input.ReadInt32();
                 break;
               }

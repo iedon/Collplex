@@ -5,13 +5,14 @@ using System.Threading.Tasks;
 
 namespace Collplex.Models.Node
 {
-    public class NodeRequestInbound
+    /* 此类是子节点向本中心节点发送的请求 */
+    public class NodePacketInbound
     {
         // 子节点请求签名
         public string Signature;
 
         // 子节点响应时间戳
-        public long? Timestamp;
+        public long Timestamp;
 
         // 子节点应用ID
         public string ClientId;

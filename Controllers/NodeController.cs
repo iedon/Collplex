@@ -127,7 +127,6 @@ namespace Collplex.Controllers
                         {
                             Key = serviceToRegister.Key,
                             RegTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
-                            RequireAuth = serviceToRegister.RequireAuth
                         };
 
                         // 自定义业务超出数量限制
@@ -140,6 +139,7 @@ namespace Collplex.Controllers
                     // 更新业务信息
                     service.Name = serviceToRegister.Name;
                     service.NodeUrl = serviceToRegister.NodeUrl;
+                    service.RequireAuth = serviceToRegister.RequireAuth;
 
                     // 此业务已经注册且本次存活 / 新注册的业务，为其更新过期时间
                     service.ExpireTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds() + college.RegInterval;

@@ -53,28 +53,23 @@ namespace Collplex.Controllers
             if (service == null) // 服务未注册
                 return PacketHandler.MakeResponse(ResponseCodeType.SVC_NOT_FOUND);
 
-            if (service.Type == Node.Types.Service.Types.ServiceType.Custom)
+            try
             {
-                try
+                object data = await httpClient.RequestNodeService(service.NodeUrl, request.Data, node.Config.Timeout, request.ClientId, node.Config.ClientSecret);
+                if (data == null)
                 {
-                    object data = await httpClient.RequestNodeService(service.NodeUrl, request.Data, node.Config.Timeout, request.ClientId, node.Config.ClientSecret);
-                    if (data == null)
-                    {
-                        return PacketHandler.MakeResponse(ResponseCodeType.NODE_RESPONSE_ERROR, data);
-                    }
-                    return PacketHandler.MakeResponse(ResponseCodeType.OK, data);
+                    return PacketHandler.MakeResponse(ResponseCodeType.NODE_RESPONSE_ERROR, data);
                 }
-                catch (TaskCanceledException)
-                {
-                    return PacketHandler.MakeResponse(ResponseCodeType.NODE_RESPONSE_TIMEDOUT);
-                }
-                catch
-                {
-                    return PacketHandler.MakeResponse(ResponseCodeType.NODE_RESPONSE_ERROR);
-                }
+                return PacketHandler.MakeResponse(ResponseCodeType.OK, data);
             }
-
-            return PacketHandler.MakeResponse(ResponseCodeType.OK, service);
+            catch (TaskCanceledException)
+            {
+                return PacketHandler.MakeResponse(ResponseCodeType.NODE_RESPONSE_TIMEDOUT);
+            }
+            catch
+            {
+                return PacketHandler.MakeResponse(ResponseCodeType.NODE_RESPONSE_ERROR);
+            }
         }
     }
 }

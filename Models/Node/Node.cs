@@ -24,20 +24,18 @@ namespace Collplex.Models.Node {
     static NodeReflection() {
       byte[] descriptorData = global::System.Convert.FromBase64String(
           string.Concat(
-            "CgpOb2RlLnByb3RvEhRDb2xscGxleC5Nb2RlbHMuTm9kZSKAAwoETm9kZRI0",
+            "CgpOb2RlLnByb3RvEhRDb2xscGxleC5Nb2RlbHMuTm9kZSKwAgoETm9kZRI0",
             "CghzZXJ2aWNlcxgBIAMoCzIiLkNvbGxwbGV4Lk1vZGVscy5Ob2RlLk5vZGUu",
             "U2VydmljZRIxCgZjb25maWcYAiABKAsyIS5Db2xscGxleC5Nb2RlbHMuTm9k",
-            "ZS5Ob2RlLkNvbmZpZxrIAQoHU2VydmljZRILCgNrZXkYASABKAkSPAoEdHlw",
-            "ZRgCIAEoDjIuLkNvbGxwbGV4Lk1vZGVscy5Ob2RlLk5vZGUuU2VydmljZS5T",
-            "ZXJ2aWNlVHlwZRIMCgRuYW1lGAMgASgJEg8KB25vZGVVcmwYBCABKAkSFAoM",
-            "cmVnVGltZXN0YW1wGAUgASgDEhcKD2V4cGlyZVRpbWVzdGFtcBgGIAEoAyIk",
-            "CgtTZXJ2aWNlVHlwZRIJCgVCQVNJQxAAEgoKBkNVU1RPTRABGkQKBkNvbmZp",
-            "ZxIUCgxjbGllbnRTZWNyZXQYASABKAkSEwoLcmVnSW50ZXJ2YWwYAiABKAUS",
-            "DwoHdGltZW91dBgDIAEoBWIGcHJvdG8z"));
+            "ZS5Ob2RlLkNvbmZpZxp5CgdTZXJ2aWNlEgsKA2tleRgBIAEoCRIMCgRuYW1l",
+            "GAIgASgJEg8KB25vZGVVcmwYAyABKAkSEwoLcmVxdWlyZUF1dGgYBCABKAgS",
+            "FAoMcmVnVGltZXN0YW1wGAUgASgDEhcKD2V4cGlyZVRpbWVzdGFtcBgGIAEo",
+            "AxpECgZDb25maWcSFAoMY2xpZW50U2VjcmV0GAEgASgJEhMKC3JlZ0ludGVy",
+            "dmFsGAIgASgFEg8KB3RpbWVvdXQYAyABKAViBnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::Collplex.Models.Node.Node), global::Collplex.Models.Node.Node.Parser, new[]{ "Services", "Config" }, null, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::Collplex.Models.Node.Node.Types.Service), global::Collplex.Models.Node.Node.Types.Service.Parser, new[]{ "Key", "Type", "Name", "NodeUrl", "RegTimestamp", "ExpireTimestamp" }, null, new[]{ typeof(global::Collplex.Models.Node.Node.Types.Service.Types.ServiceType) }, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Collplex.Models.Node.Node), global::Collplex.Models.Node.Node.Parser, new[]{ "Services", "Config" }, null, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::Collplex.Models.Node.Node.Types.Service), global::Collplex.Models.Node.Node.Types.Service.Parser, new[]{ "Key", "Name", "NodeUrl", "RequireAuth", "RegTimestamp", "ExpireTimestamp" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Collplex.Models.Node.Node.Types.Config), global::Collplex.Models.Node.Node.Types.Config.Parser, new[]{ "ClientSecret", "RegInterval", "Timeout" }, null, null, null, null)})
           }));
     }
@@ -231,9 +229,9 @@ namespace Collplex.Models.Node {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         public Service(Service other) : this() {
           key_ = other.key_;
-          type_ = other.type_;
           name_ = other.name_;
           nodeUrl_ = other.nodeUrl_;
+          requireAuth_ = other.requireAuth_;
           regTimestamp_ = other.regTimestamp_;
           expireTimestamp_ = other.expireTimestamp_;
           _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
@@ -258,22 +256,8 @@ namespace Collplex.Models.Node {
           }
         }
 
-        /// <summary>Field number for the "type" field.</summary>
-        public const int TypeFieldNumber = 2;
-        private global::Collplex.Models.Node.Node.Types.Service.Types.ServiceType type_ = global::Collplex.Models.Node.Node.Types.Service.Types.ServiceType.Basic;
-        /// <summary>
-        /// 子节点业务类型 
-        /// </summary>
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        public global::Collplex.Models.Node.Node.Types.Service.Types.ServiceType Type {
-          get { return type_; }
-          set {
-            type_ = value;
-          }
-        }
-
         /// <summary>Field number for the "name" field.</summary>
-        public const int NameFieldNumber = 3;
+        public const int NameFieldNumber = 2;
         private string name_ = "";
         /// <summary>
         /// 子节点友好名称 
@@ -287,7 +271,7 @@ namespace Collplex.Models.Node {
         }
 
         /// <summary>Field number for the "nodeUrl" field.</summary>
-        public const int NodeUrlFieldNumber = 4;
+        public const int NodeUrlFieldNumber = 3;
         private string nodeUrl_ = "";
         /// <summary>
         /// 子节点所对应的该业务的完整URL 
@@ -297,6 +281,20 @@ namespace Collplex.Models.Node {
           get { return nodeUrl_; }
           set {
             nodeUrl_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+          }
+        }
+
+        /// <summary>Field number for the "requireAuth" field.</summary>
+        public const int RequireAuthFieldNumber = 4;
+        private bool requireAuth_;
+        /// <summary>
+        /// 本业务需要经过统一鉴权服务鉴权后才允许访问(即客户需要持有token才能访问) 
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        public bool RequireAuth {
+          get { return requireAuth_; }
+          set {
+            requireAuth_ = value;
           }
         }
 
@@ -342,9 +340,9 @@ namespace Collplex.Models.Node {
             return true;
           }
           if (Key != other.Key) return false;
-          if (Type != other.Type) return false;
           if (Name != other.Name) return false;
           if (NodeUrl != other.NodeUrl) return false;
+          if (RequireAuth != other.RequireAuth) return false;
           if (RegTimestamp != other.RegTimestamp) return false;
           if (ExpireTimestamp != other.ExpireTimestamp) return false;
           return Equals(_unknownFields, other._unknownFields);
@@ -354,9 +352,9 @@ namespace Collplex.Models.Node {
         public override int GetHashCode() {
           int hash = 1;
           if (Key.Length != 0) hash ^= Key.GetHashCode();
-          if (Type != global::Collplex.Models.Node.Node.Types.Service.Types.ServiceType.Basic) hash ^= Type.GetHashCode();
           if (Name.Length != 0) hash ^= Name.GetHashCode();
           if (NodeUrl.Length != 0) hash ^= NodeUrl.GetHashCode();
+          if (RequireAuth != false) hash ^= RequireAuth.GetHashCode();
           if (RegTimestamp != 0L) hash ^= RegTimestamp.GetHashCode();
           if (ExpireTimestamp != 0L) hash ^= ExpireTimestamp.GetHashCode();
           if (_unknownFields != null) {
@@ -376,17 +374,17 @@ namespace Collplex.Models.Node {
             output.WriteRawTag(10);
             output.WriteString(Key);
           }
-          if (Type != global::Collplex.Models.Node.Node.Types.Service.Types.ServiceType.Basic) {
-            output.WriteRawTag(16);
-            output.WriteEnum((int) Type);
-          }
           if (Name.Length != 0) {
-            output.WriteRawTag(26);
+            output.WriteRawTag(18);
             output.WriteString(Name);
           }
           if (NodeUrl.Length != 0) {
-            output.WriteRawTag(34);
+            output.WriteRawTag(26);
             output.WriteString(NodeUrl);
+          }
+          if (RequireAuth != false) {
+            output.WriteRawTag(32);
+            output.WriteBool(RequireAuth);
           }
           if (RegTimestamp != 0L) {
             output.WriteRawTag(40);
@@ -407,14 +405,14 @@ namespace Collplex.Models.Node {
           if (Key.Length != 0) {
             size += 1 + pb::CodedOutputStream.ComputeStringSize(Key);
           }
-          if (Type != global::Collplex.Models.Node.Node.Types.Service.Types.ServiceType.Basic) {
-            size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) Type);
-          }
           if (Name.Length != 0) {
             size += 1 + pb::CodedOutputStream.ComputeStringSize(Name);
           }
           if (NodeUrl.Length != 0) {
             size += 1 + pb::CodedOutputStream.ComputeStringSize(NodeUrl);
+          }
+          if (RequireAuth != false) {
+            size += 1 + 1;
           }
           if (RegTimestamp != 0L) {
             size += 1 + pb::CodedOutputStream.ComputeInt64Size(RegTimestamp);
@@ -436,14 +434,14 @@ namespace Collplex.Models.Node {
           if (other.Key.Length != 0) {
             Key = other.Key;
           }
-          if (other.Type != global::Collplex.Models.Node.Node.Types.Service.Types.ServiceType.Basic) {
-            Type = other.Type;
-          }
           if (other.Name.Length != 0) {
             Name = other.Name;
           }
           if (other.NodeUrl.Length != 0) {
             NodeUrl = other.NodeUrl;
+          }
+          if (other.RequireAuth != false) {
+            RequireAuth = other.RequireAuth;
           }
           if (other.RegTimestamp != 0L) {
             RegTimestamp = other.RegTimestamp;
@@ -466,16 +464,16 @@ namespace Collplex.Models.Node {
                 Key = input.ReadString();
                 break;
               }
-              case 16: {
-                Type = (global::Collplex.Models.Node.Node.Types.Service.Types.ServiceType) input.ReadEnum();
-                break;
-              }
-              case 26: {
+              case 18: {
                 Name = input.ReadString();
                 break;
               }
-              case 34: {
+              case 26: {
                 NodeUrl = input.ReadString();
+                break;
+              }
+              case 32: {
+                RequireAuth = input.ReadBool();
                 break;
               }
               case 40: {
@@ -489,18 +487,6 @@ namespace Collplex.Models.Node {
             }
           }
         }
-
-        #region Nested types
-        /// <summary>Container for nested types declared in the Service message type.</summary>
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        public static partial class Types {
-          public enum ServiceType {
-            [pbr::OriginalName("BASIC")] Basic = 0,
-            [pbr::OriginalName("CUSTOM")] Custom = 1,
-          }
-
-        }
-        #endregion
 
       }
 

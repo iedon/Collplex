@@ -1,9 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Collplex.Core;
 using Collplex.Models;
 using Collplex.Models.Node;
@@ -107,7 +107,7 @@ namespace Collplex.Controllers
 
                 foreach (var serviceToRegister in data.Service) // 用户提交的 Service
                 {
-                    if (serviceToRegister.Key == null)
+                    if (serviceToRegister.Key == null || serviceToRegister.Name == null || serviceToRegister.NodeUrl == null)
                         return PacketHandler.MakeResponse(ResponseCodeType.INVALID_BODY);
 
                     serviceToRegister.Key = serviceToRegister.Key.ToLower(); // 业务 Key 强制小写
@@ -127,12 +127,11 @@ namespace Collplex.Controllers
                         {
                             Key = serviceToRegister.Key,
                             RegTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
-                            /* 判断 Key 是否在内建的基础业务枚举中，如果是，则标记为基础业务，如果不是，则标记为自定义业务 */
-                            Type = Enum.IsDefined(typeof(BaseServiceEnum), serviceToRegister.Key) ? Node.Types.Service.Types.ServiceType.Basic : Node.Types.Service.Types.ServiceType.Custom,
+                            RequireAuth = serviceToRegister.RequireAuth
                         };
 
                         // 自定义业务超出数量限制
-                        if (node.Services.Count + Enum.GetValues(typeof(BaseServiceEnum)).Length >= college.MaxUrls)
+                        if (node.Services.Count >= college.MaxUrls)
                             return PacketHandler.MakeResponse(ResponseCodeType.NODE_REG_CUSTOM_SVC_LIMIT);
 
                         node.Services.Add(service);

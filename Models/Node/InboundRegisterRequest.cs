@@ -8,7 +8,7 @@ namespace Collplex.Models.Node
 {
     public class InboundRegisterRequest
     {
-        public class RegisterElement
+        public class ServiceRegisterElement
         {
             // 子节点业务 Key
             public string Key;
@@ -24,6 +24,6 @@ namespace Collplex.Models.Node
         }
 
         // 子节点注册的业务元组
-        public List<RegisterElement> Service;
+        public List<ServiceRegisterElement> Services;
     }
 }

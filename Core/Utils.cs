@@ -1,10 +1,8 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 namespace Collplex.Core
 {
@@ -64,26 +62,22 @@ namespace Collplex.Core
 
         public static string HmacSHA256Hash(string message, string secret)
         {
-            secret = secret ?? "";
+            secret ??= "";
             var encoding = new UTF8Encoding();
             byte[] keyByte = encoding.GetBytes(secret);
             byte[] messageBytes = encoding.GetBytes(message);
-            using (var hmacsha256 = new HMACSHA256(keyByte))
-            {
-                byte[] hashmessage = hmacsha256.ComputeHash(messageBytes);
-                return Convert.ToBase64String(hashmessage);
-            }
+            using var hmacsha256 = new HMACSHA256(keyByte);
+            byte[] hashmessage = hmacsha256.ComputeHash(messageBytes);
+            return Convert.ToBase64String(hashmessage);
         }
 
         public static string SHA256Hash(string message)
         {
             var encoding = new UTF8Encoding();
             byte[] messageBytes = encoding.GetBytes(message);
-            using (var sha256hash = SHA256.Create())
-            {
-                byte[] hashmessage = sha256hash.ComputeHash(messageBytes);
-                return Convert.ToBase64String(hashmessage);
-            }
+            using var sha256hash = SHA256.Create();
+            byte[] hashmessage = sha256hash.ComputeHash(messageBytes);
+            return Convert.ToBase64String(hashmessage);
         }
 
         public static byte[] GetRandomBytes(int size)
@@ -96,8 +90,8 @@ namespace Collplex.Core
             return data;
         }
 
-        public static string JsonSerialize(object serializable)
-            => JsonConvert.SerializeObject(serializable, Formatting.None,
+        public static string JsonSerialize<T>(T rawObject)
+            => JsonConvert.SerializeObject(rawObject, Formatting.None,
                     new JsonSerializerSettings
                     {
                         ContractResolver = new Newtonsoft.Json.Serialization.CamelCasePropertyNamesContractResolver()

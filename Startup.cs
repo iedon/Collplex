@@ -2,20 +2,16 @@
 using System.Net;
 using System.Reflection;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Microsoft.EntityFrameworkCore;
 using StackExchange.Redis;
+using Newtonsoft.Json.Serialization;
 using Collplex.Core;
-using Collplex.Models;
 
-/* Easy University Service Integration */
-/*      Copyright (C) 2019 iEdon.      */
+
+/*  iEdon Collplex Tiny MicroService SuperNode  */
+/*           Copyright (C) 2019 iEdon.          */
 
 namespace Collplex
 {
@@ -45,20 +41,12 @@ namespace Collplex
                 options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
             });
 
-            // 注入数据库
-            var DbSettings = Configuration.GetSection("DbSettings");
-
-            // -- 注入帐号 MySQL 数据库
-            var MySQLSettings = DbSettings.GetSection("MySQL");
-            services.AddDbContextPool<MainContext>(options =>
-            {
-                options.UseMySql(MySQLSettings.GetValue<string>("ConnectionString"));
-            }, MySQLSettings.GetValue<int>("PoolSize"));
-
             // -- 配置子节点业务注册中心 Redis 数据库(初始化全局静态 Redis 调制器对象)
+            var DbSettings = Configuration.GetSection("DbSettings");
             var RedisSettings = DbSettings.GetSection("Redis");
             Constants.Redis = ConnectionMultiplexer.Connect(RedisSettings.GetValue<string>("ConfigurationString"));
             Constants.KeyPrefix = RedisSettings.GetValue<string>("KeyPrefix");
+            Constants.ContextKeyName = RedisSettings.GetValue<string>("ContextKeyName");
             Constants.AcquireLockTimeoutSeconds = RedisSettings.GetValue<uint>("AcquireLockTimeoutSeconds");
             Constants.LockTimeoutSeconds = RedisSettings.GetValue<uint>("LockTimeoutSeconds");
 
@@ -71,53 +59,34 @@ namespace Collplex
             // 注入子节点访问客户端
             services.AddHttpClient<NodeHttpClient>();
 
-            // 注入 MVC remove this for 3.0
-            services.AddMvc()
-                .ConfigureApiBehaviorOptions(options =>
-                {
-                    options.SuppressModelStateInvalidFilter = true;
-                });
-            //services.AddRouting();
-            //services.AddControllers();
+            // 注入路由和控制器
+            services.AddRouting();
+            services.AddControllers().ConfigureApiBehaviorOptions(options =>
+            {
+                options.SuppressModelStateInvalidFilter = true;
+            })/*.AddJsonOptions(options => {    目前用不了 System.Text.Json
+                // 不美化输出
+                options.JsonSerializerOptions.WriteIndented = false;
+                // 采用驼峰命名法命名输出变量
+                options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+                options.JsonSerializerOptions.DictionaryKeyPolicy = JsonNamingPolicy.CamelCase;
+            })*/
+            .AddNewtonsoftJson(options =>
+           options.SerializerSettings.ContractResolver =
+              new CamelCasePropertyNamesContractResolver());
         }
 
-        //                                             IHostEnvironment env
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILogger<Startup> logger)
+        public void Configure(IApplicationBuilder app)
         {
             app.UseForwardedHeaders();
-            //app.UseRouting();
-            
-            // 设置全局异常捕获中间件
-            app.UseExceptionHandler(appError =>
-            {
-                appError.Run(async context =>
-                {
-                    context.Response.StatusCode = StatusCodes.Status200OK;
-                    context.Response.ContentType = Constants.JsonContentType;
 
-                    var contextFeature = context.Features.Get<IExceptionHandlerFeature>();
-                    if (contextFeature != null)
-                    {
-                        logger.LogError("Global exception captured: " + contextFeature.Error.Message + Environment.NewLine + contextFeature.Error.StackTrace);
-                        await context.Response.WriteAsync(Utils.JsonSerialize(PacketHandler.MakeResponse(ResponseCodeType.SERVER_EXCEPTION)));
-                    }
-                });
-            });
+            // 设置路由与 Endpoint
+            app.UseRouting();
+            app.UseEndpoints(endpoints => endpoints.MapControllers());
 
-            // 将其他错误页面的处理重定向到 /Error，以便响应按照统一格式
-            app.UseStatusCodePagesWithReExecute("/error/{0}");
-
-            /*app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapControllerRoute("default", "{controller=Default}/{action=Index}/{id?}");
-            });*/
-
-            app.UseMvc(routes => // remove this for 3.0
-            {
-                routes.MapRoute(
-                    name: "default",
-                    template: "{controller=Default}/{action=Index}/{id?}");
-            });
+            // 设置全局异常捕获与统一错误处理
+            app.UseExceptionHandler(ErrorHandler.commonErrorHandler);
+            app.UseStatusCodePages(ErrorHandler.commonErrorHandler);
         }
     }
 }

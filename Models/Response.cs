@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace Collplex.Models
@@ -16,7 +15,7 @@ namespace Collplex.Models
         SERVICE_UNAVAILABLE = 1005,
         METHOD_NOT_ALLOWED = 1006,
         INVALID_BODY = 1007,
-        NODE_INVALID_CLIENT_ID_OR_SECRET = 2000,
+        NODE_INVALID_CLIENT_ID = 2000,
         NODE_OPERATION_FAILED = 2001,
         NODE_REG_CUSTOM_SVC_LIMIT = 2002,
         NODE_LOCK_TIMEOUT = 2003,

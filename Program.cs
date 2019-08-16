@@ -1,14 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using NLog.Web;
+
+using System.Text.Json;
+using Collplex.Core;
 
 namespace Collplex
 {
@@ -17,16 +17,15 @@ namespace Collplex
         public static async Task Main(string[] args)
         {
             // 首先初始化一个 NLOG 以便捕捉并记录所有启动过程中的错误，程序退出时销毁
-            var logger = NLog.Web.NLogBuilder.ConfigureNLog("nlog.config").GetCurrentClassLogger();
+            var logger = NLogBuilder.ConfigureNLog("nlog.config").GetCurrentClassLogger();
             try
             {
-                //await CreateHostBuilder(args).Build().RunAsync();
-                await CreateWebHostBuilder(args).Build().RunAsync();
+                await CreateHostBuilder(args).Build().RunAsync();
             }
             catch (Exception ex)
             {
                 // NLOG: 捕捉初始化错误
-                logger.Error(ex, "Application stopped because of exception.");
+                logger.Error(ex, "Application stopped due to exception.");
                 throw;
             }
             finally
@@ -35,7 +34,7 @@ namespace Collplex
                 NLog.LogManager.Shutdown();
             }
         }
-        /*
+
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder =>
@@ -46,15 +45,6 @@ namespace Collplex
                 {
                     logging.ClearProviders();
                 })
-                .UseNLog();  // 初始化 NLOG 注入
-        */
-        public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
-            WebHost.CreateDefaultBuilder(args)
-                .UseStartup<Startup>()
-            .ConfigureLogging(logging => // 清除所有默认的日志提供方，以便只使用 NLOG
-            {
-                logging.ClearProviders();
-            })
                 .UseNLog();  // 初始化 NLOG 注入
     }
 }

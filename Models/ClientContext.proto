@@ -1,0 +1,28 @@
+syntax = "proto3";
+package Collplex.Models;
+
+message ClientContext {
+
+	/* 客户 */
+	message Client {
+
+		/* 客户ID */
+		string clientId = 1;
+
+		/* 客户密钥，用于数据加解密 */
+		string clientSecret = 2;
+
+		/* 客户名称 */
+		string name = 3;
+
+		/* 客户子节点总共最多可以注册多少业务 */
+		int32 maxServices = 4;
+
+		/* 客户子节点注册周期，单位秒，客户子节点必须在这个时间以内至少重复注册一次以报告存活，否则本中心节点会认为子节点业务宕机 */
+		int32 regIntervalSeconds = 5;
+
+		/* 允许中心节点请求子节点业务时的最大等待时间 */
+		int32 timeout = 6;
+	}
+	repeated Client clients = 1;
+}

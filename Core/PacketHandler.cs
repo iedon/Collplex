@@ -8,44 +8,27 @@ namespace Collplex.Core
     {
         private static string GetMessageByCode(ResponseCodeType code)
         {
-            switch (code) {
-                case ResponseCodeType.OK:
-                    return "ok";
-                case ResponseCodeType.SERVER_EXCEPTION:
-                    return "server error";
-                case ResponseCodeType.NOT_FOUND:
-                    return "not found";
-                case ResponseCodeType.FORBIDDEN:
-                    return "forbidden";
-                case ResponseCodeType.BAD_GATEWAY:
-                    return "bad gateway";
-                case ResponseCodeType.BAD_REQUEST:
-                    return "bad request";
-                case ResponseCodeType.SERVICE_UNAVAILABLE:
-                    return "service unavailable";
-                case ResponseCodeType.METHOD_NOT_ALLOWED:
-                    return "method not allowed";
-                case ResponseCodeType.INVALID_BODY:
-                    return "invalid body";
-                case ResponseCodeType.NODE_OPERATION_FAILED:
-                    return "node: operation failed";
-                case ResponseCodeType.NODE_INVALID_CLIENT_ID_OR_SECRET:
-                    return "node: invalid clientId or clientSecret";
-                case ResponseCodeType.NODE_REG_CUSTOM_SVC_LIMIT:
-                    return "node: could not register more custom services";
-                case ResponseCodeType.NODE_LOCK_TIMEOUT:
-                    return "node: lock timeout";
-                case ResponseCodeType.NODE_RESPONSE_ERROR:
-                    return "node: response error";
-                case ResponseCodeType.NODE_RESPONSE_TIMEDOUT:
-                    return "node: response timed out";
-                case ResponseCodeType.SVC_INVALID_CLIENT_ID:
-                    return "service: invalid clientId";
-                case ResponseCodeType.SVC_NOT_FOUND:
-                    return "service: requested key not found";
-                default:
-                    return "unknown";
-            }
+            return code switch
+            {
+                ResponseCodeType.OK => "ok",
+                ResponseCodeType.SERVER_EXCEPTION => "server error",
+                ResponseCodeType.NOT_FOUND => "not found",
+                ResponseCodeType.FORBIDDEN => "forbidden",
+                ResponseCodeType.BAD_GATEWAY => "bad gateway",
+                ResponseCodeType.BAD_REQUEST => "bad request",
+                ResponseCodeType.SERVICE_UNAVAILABLE => "service unavailable",
+                ResponseCodeType.METHOD_NOT_ALLOWED => "method not allowed",
+                ResponseCodeType.INVALID_BODY => "invalid body",
+                ResponseCodeType.NODE_OPERATION_FAILED => "node: operation failed",
+                ResponseCodeType.NODE_INVALID_CLIENT_ID => "node: invalid clientId",
+                ResponseCodeType.NODE_REG_CUSTOM_SVC_LIMIT => "node: could not register more custom services",
+                ResponseCodeType.NODE_LOCK_TIMEOUT => "node: lock timeout",
+                ResponseCodeType.NODE_RESPONSE_ERROR => "node: response error",
+                ResponseCodeType.NODE_RESPONSE_TIMEDOUT => "node: response timed out",
+                ResponseCodeType.SVC_INVALID_CLIENT_ID => "service: invalid clientId",
+                ResponseCodeType.SVC_NOT_FOUND => "service: requested key not found",
+                _ => "unknown",
+            };
         }
 
         public static ResponsePacket MakeResponse(ResponseCodeType code, object data = null) => new ResponsePacket

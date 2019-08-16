@@ -1,30 +1,47 @@
-﻿using Google.Protobuf;
-using System;
+﻿using System;
 using System.Threading.Tasks;
+using Google.Protobuf;
+using Collplex.Models;
 using Collplex.Models.Node;
 
 namespace Collplex.Core
 {
     public static class NodeHelper
     {
-        // 操作子节点时所使用的锁的前缀，项目固定值。
+        // 操作子节点时所使用的锁的前缀，内部固定值。
         private static readonly string LockPrefix = "lock_";
 
+        /* 获得客户 */
+        public static async Task<ClientContext.Types.Client> GetClient(string clientId)
+        {
+            var db = Constants.Redis.GetDatabase();
+            byte[] rawBytes = await db.StringGetAsync(Constants.KeyPrefix + Constants.ContextKeyName);
+            if (rawBytes != null)
+            {
+                ClientContext clientContext = ClientContext.Parser.ParseFrom(rawBytes);
+                foreach (var client in clientContext.Clients)
+                {
+                    if (client.ClientId.ToLower() == clientId.ToLower()) return client;
+                }
+            }
+            return null;
+        }
+
         /* 获取子节点数据 */
-        public static async Task<Node> GetNode(string clientId)
+        public static async Task<NodeData> GetNodeData(string clientId)
         {
             var db = Constants.Redis.GetDatabase();
             byte[] rawBytes = await db.StringGetAsync(Constants.KeyPrefix + clientId);
-            Node node = null;
-            if (rawBytes != null) node = Node.Parser.ParseFrom(rawBytes);
-            return node;
+            NodeData nodeData = null;
+            if (rawBytes != null) nodeData = NodeData.Parser.ParseFrom(rawBytes);
+            return nodeData;
         }
 
         /* 设置子节点数据 */
-        public static async Task<bool> SetNode(string clientId, Node node)
+        public static async Task<bool> SetNodeData(string clientId, NodeData nodeData)
         {
             var db = Constants.Redis.GetDatabase();
-            return await db.StringSetAsync(Constants.KeyPrefix + clientId, node.ToByteArray());
+            return await db.StringSetAsync(Constants.KeyPrefix + clientId, nodeData.ToByteArray());
         }
 
         /* 锁定子节点的操作权限，即使未注册也能(必须)锁定(防止并发注册造成数据混乱) */

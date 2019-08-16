@@ -20,36 +20,32 @@ namespace Collplex.Core
         }
 
         /* 如果任务超时，会由 PostAsync Task 发出 TaskCanceledException */
-        public async Task<object> RequestNodeService(string nodeServiceUrl, object requestData, int timeout, string clientId, string clientSecret)
+        public async Task<object> RequestNodeService(string nodeServiceUrl, OutboundRequest outboundRequest, int timeout, string clientId, string clientSecret)
         {
             Client.Timeout = TimeSpan.FromSeconds(timeout);
-            if (!PacketHandler.MakeNodePacketOutbound(requestData, clientId, clientSecret, out NodePacketOutbound packetOutbound, out string iv))
+            if (!PacketHandler.MakeNodePacketOutbound(outboundRequest, clientId, clientSecret, out NodePacketOutbound packetOutbound, out string iv))
                 return null;
 
-            using (var content = new StringContent(Utils.JsonSerialize(packetOutbound), Encoding.UTF8, Constants.JsonContentType))
+            using var content = new StringContent(Utils.JsonSerialize(packetOutbound), Encoding.UTF8, Constants.JsonContentType);
+            using var response = await Client.PostAsync(nodeServiceUrl, content);
+            if (!response.IsSuccessStatusCode)
             {
-                using (var response = await Client.PostAsync(nodeServiceUrl, content))
+                return null;
+            }
+            try
+            {
+                string httpBody = await response.Content.ReadAsStringAsync();
+                ResponsePacket responsePacket = Utils.JsonDeSerialize<ResponsePacket>(httpBody);
+                if (responsePacket.Code != ResponseCodeType.OK)
                 {
-                    if (!response.IsSuccessStatusCode)
-                    {
-                        return null;
-                    }
-                    try
-                    {
-                        string httpBody = await response.Content.ReadAsStringAsync();
-                        ResponsePacket responsePacket = Utils.JsonDeSerialize<ResponsePacket>(httpBody);
-                        if (responsePacket.Code != ResponseCodeType.OK)
-                        {
-                            return null;
-                        }
-                        string decryptedData = Utils.CommonDecrypt(responsePacket.Data.ToString(), clientSecret, iv);
-                        return Utils.JsonDeSerialize<object>(decryptedData);
-                    }
-                    catch
-                    {
-                        return null;
-                    }
+                    return null;
                 }
+                string decryptedData = Utils.CommonDecrypt(responsePacket.Data.ToString(), clientSecret, iv);
+                return Utils.JsonDeSerialize<object>(decryptedData);
+            }
+            catch
+            {
+                return null;
             }
         }
     }

@@ -1,26 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc; // remove this in asp.net core 3.0
+using Microsoft.AspNetCore.Mvc;
 using Collplex.Core;
 using Collplex.Models;
 using Collplex.Models.Node;
-using Microsoft.EntityFrameworkCore;
 
 namespace Collplex.Controllers
 {
     // 业务控制器
     public class ServiceController : AppBaseController
     {
-        private readonly MainContext context;
         private readonly NodeHttpClient httpClient;
 
-        public ServiceController(MainContext context, NodeHttpClient httpClient) : base(context)
+        public ServiceController(NodeHttpClient httpClient)
         {
-            this.context = context;
             this.httpClient = httpClient;
         }
+
 
         [Route("/service")]
         public ResponsePacket ServiceMain()
@@ -36,12 +33,13 @@ namespace Collplex.Controllers
             if (!PacketHandler.ValidateRequest(request))
                 return PacketHandler.MakeResponse(ResponseCodeType.BAD_REQUEST);
 
-            Node node = await NodeHelper.GetNode(request.ClientId);
-            if (node == null)
+            ClientContext.Types.Client client = await NodeHelper.GetClient(request.ClientId);
+            NodeData nodeData = await NodeHelper.GetNodeData(request.ClientId);
+            if (client == null || nodeData == null)
                 return PacketHandler.MakeResponse(ResponseCodeType.SVC_INVALID_CLIENT_ID);
 
-            Node.Types.Service service = null;
-            foreach (Node.Types.Service svc in node.Services)
+            NodeData.Types.NodeService service = null;
+            foreach (NodeData.Types.NodeService svc in nodeData.Services)
             {
                 if (svc.Key == request.Key.ToLower())
                 {
@@ -55,10 +53,25 @@ namespace Collplex.Controllers
 
             try
             {
-                object data = await httpClient.RequestNodeService(service.NodeUrl, request.Data, node.Config.Timeout, request.ClientId, node.Config.ClientSecret);
+                // 获取并处理最终用户的 User-Agent 头部。
+                string userAgentSingle = string.Empty;
+                if (HttpContext.Request.Headers.TryGetValue("user-agent", out var uaHeaders) && uaHeaders.Count > 0)
+                {
+                    // 因为 ASP.NET 允许最终用户有多个头，而 UA 正常情况下只发送一个，因此只取一个值
+                    userAgentSingle = uaHeaders.ToArray()[0];
+                }
+                OutboundRequest outboundRequest = new OutboundRequest()
+                {
+                    RemoteIp = HttpContext.Connection.RemoteIpAddress.ToString(),
+                    RemotePort = HttpContext.Connection.RemotePort,
+                    UserAgent = userAgentSingle,
+                    Payload = request.Data
+                };
+
+                object data = await httpClient.RequestNodeService(service.NodeUrl, outboundRequest, client.Timeout, request.ClientId, client.ClientSecret);
                 if (data == null)
                 {
-                    return PacketHandler.MakeResponse(ResponseCodeType.NODE_RESPONSE_ERROR, data);
+                    return PacketHandler.MakeResponse(ResponseCodeType.NODE_RESPONSE_ERROR);
                 }
                 return PacketHandler.MakeResponse(ResponseCodeType.OK, data);
             }
@@ -71,5 +84,6 @@ namespace Collplex.Controllers
                 return PacketHandler.MakeResponse(ResponseCodeType.NODE_RESPONSE_ERROR);
             }
         }
+
     }
 }

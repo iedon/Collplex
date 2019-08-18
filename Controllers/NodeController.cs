@@ -26,6 +26,7 @@ namespace Collplex.Controllers
             if (!PacketHandler.ValidateNodePacketInbound(request))
                 return PacketHandler.MakeResponse(ResponseCodeType.BAD_REQUEST);
 
+            request.ClientId = request.ClientId.ToLower();
             var client = await NodeHelper.GetClient(request.ClientId);
             if (client == null)
                 return PacketHandler.MakeResponse(ResponseCodeType.NODE_INVALID_CLIENT_ID);
@@ -47,7 +48,7 @@ namespace Collplex.Controllers
                     {
                         return PacketHandler.MakeResponse(ResponseCodeType.INVALID_BODY);
                     }
-                    return await RegisterService(client, payload);
+                    return await RegisterService(request.ClientId, client, payload);
                 }
                 case NodeActionEnum.DESTROY:
                 {
@@ -60,10 +61,10 @@ namespace Collplex.Controllers
                     {
                         return PacketHandler.MakeResponse(ResponseCodeType.INVALID_BODY);
                     }
-                    return await DestroyService(client, payload);
+                    return await DestroyService(request.ClientId, payload);
                 }
                 case NodeActionEnum.LIST:
-                    return await ListServices(request, client);
+                    return await ListServices(client, request);
                 default: return PacketHandler.MakeResponse(ResponseCodeType.BAD_REQUEST);
             }
         }
@@ -73,19 +74,19 @@ namespace Collplex.Controllers
          *  [使用用户的 iv 加密返回]
          * 子节点业务注册与续命
          */
-        private async Task<ResponsePacket> RegisterService(ClientContext.Types.Client client, InboundRegisterRequest data)
+        private async Task<ResponsePacket> RegisterService(string clientId, Client client, InboundRegisterRequest data)
         {
             if (data == null || data.Services == null)
                 return PacketHandler.MakeResponse(ResponseCodeType.INVALID_BODY);
 
             // 锁定节点，可以有效避免并发注册的问题
-            string nodeLock = await NodeHelper.LockNode(client.ClientId);
+            string nodeLock = await NodeHelper.LockNode(clientId);
             if (nodeLock == null)
                 return PacketHandler.MakeResponse(ResponseCodeType.NODE_LOCK_TIMEOUT);
 
             try
             {
-                NodeData nodeData = await NodeHelper.GetNodeData(client.ClientId);
+                NodeData nodeData = await NodeHelper.GetNodeData(clientId);
                 if (nodeData == null) nodeData = new NodeData();  // 注册中心从未有过记录，为其新增记录
 
                 foreach (var serviceToRegister in data.Services) // 用户提交的 Service
@@ -128,13 +129,13 @@ namespace Collplex.Controllers
                     service.ExpireTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds() + client.RegIntervalSeconds;
                 }
 
-                if (!await NodeHelper.SetNodeData(client.ClientId, nodeData))
+                if (!await NodeHelper.SetNodeData(clientId, nodeData))
                     return PacketHandler.MakeResponse(ResponseCodeType.NODE_OPERATION_FAILED);
                 return PacketHandler.MakeResponse(ResponseCodeType.OK);
             }
             finally
             {
-                await NodeHelper.ReleaseNode(client.ClientId, nodeLock);
+                await NodeHelper.ReleaseNode(clientId, nodeLock);
             }
         }
 
@@ -143,19 +144,19 @@ namespace Collplex.Controllers
          *  [使用用户的 iv 加密返回]
          *  子节点销毁业务
          */
-        private async Task<ResponsePacket> DestroyService(ClientContext.Types.Client client, InboundDestroyRequest data)
+        private async Task<ResponsePacket> DestroyService(string clientId, InboundDestroyRequest data)
         {
             if (data == null || data.Keys == null)
                 return PacketHandler.MakeResponse(ResponseCodeType.INVALID_BODY);
 
             // 锁定节点，可以有效避免并发注册的问题
-            string nodeLock = await NodeHelper.LockNode(client.ClientId);
+            string nodeLock = await NodeHelper.LockNode(clientId);
             if (nodeLock == null)
                 return PacketHandler.MakeResponse(ResponseCodeType.NODE_LOCK_TIMEOUT);
 
             try
             {
-                NodeData nodeData = await NodeHelper.GetNodeData(client.ClientId);
+                NodeData nodeData = await NodeHelper.GetNodeData(clientId);
                 if (nodeData == null) // 本身就没有注册任何业务，直接返回空
                     return PacketHandler.MakeResponse(ResponseCodeType.OK);
 
@@ -178,13 +179,13 @@ namespace Collplex.Controllers
 
                     nodeData.Services.Remove(service); // 销毁业务
                 }
-                if (!await NodeHelper.SetNodeData(client.ClientId, nodeData))
+                if (!await NodeHelper.SetNodeData(clientId, nodeData))
                     return PacketHandler.MakeResponse(ResponseCodeType.NODE_OPERATION_FAILED);
                 return PacketHandler.MakeResponse(ResponseCodeType.OK);
             }
             finally
             {
-                await NodeHelper.ReleaseNode(client.ClientId, nodeLock);
+                await NodeHelper.ReleaseNode(clientId, nodeLock);
             }
         }
 
@@ -193,9 +194,9 @@ namespace Collplex.Controllers
          *  [使用用户的 iv 加密返回]
          *  子节点获取当前所注册的业务信息
          */
-        private async Task<ResponsePacket> ListServices(NodePacketInbound request, ClientContext.Types.Client client)
+        private async Task<ResponsePacket> ListServices(Client client, NodePacketInbound request)
         {
-            NodeData nodeData = await NodeHelper.GetNodeData(client.ClientId);
+            NodeData nodeData = await NodeHelper.GetNodeData(request.ClientId);
             if (nodeData == null) nodeData = new NodeData(); // 没有找到节点，就建一个空的临时对象，用于序列化空服务响应
             return PacketHandler.MakeResponse(ResponseCodeType.OK, PacketHandler.MakeNodeEncryptedPayload(nodeData.Services, client.ClientSecret, request.Iv));
         }

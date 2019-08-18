@@ -46,7 +46,6 @@ namespace Collplex
             var RedisSettings = DbSettings.GetSection("Redis");
             Constants.Redis = ConnectionMultiplexer.Connect(RedisSettings.GetValue<string>("ConfigurationString"));
             Constants.KeyPrefix = RedisSettings.GetValue<string>("KeyPrefix");
-            Constants.ContextKeyName = RedisSettings.GetValue<string>("ContextKeyName");
             Constants.AcquireLockTimeoutSeconds = RedisSettings.GetValue<uint>("AcquireLockTimeoutSeconds");
             Constants.LockTimeoutSeconds = RedisSettings.GetValue<uint>("LockTimeoutSeconds");
 

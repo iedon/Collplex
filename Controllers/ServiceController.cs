@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Collplex.Core;
 using Collplex.Models;
 using Collplex.Models.Node;
+using System.Net.Http;
 
 namespace Collplex.Controllers
 {
@@ -33,7 +34,8 @@ namespace Collplex.Controllers
             if (!PacketHandler.ValidateRequest(request))
                 return PacketHandler.MakeResponse(ResponseCodeType.BAD_REQUEST);
 
-            ClientContext.Types.Client client = await NodeHelper.GetClient(request.ClientId);
+            request.ClientId = request.ClientId.ToLower();
+            Client client = await NodeHelper.GetClient(request.ClientId);
             NodeData nodeData = await NodeHelper.GetNodeData(request.ClientId);
             if (client == null || nodeData == null)
                 return PacketHandler.MakeResponse(ResponseCodeType.SVC_INVALID_CLIENT_ID);
@@ -81,7 +83,7 @@ namespace Collplex.Controllers
             }
             catch
             {
-                return PacketHandler.MakeResponse(ResponseCodeType.NODE_RESPONSE_ERROR);
+                return PacketHandler.MakeResponse(ResponseCodeType.NODE_NETWORK_EXCEPTION);
             }
         }
 

@@ -8,22 +8,21 @@ namespace Collplex.Core
 {
     public static class NodeHelper
     {
-        // 操作子节点时所使用的锁的前缀，内部固定值。
+        // 操作子节点时所使用的锁的键前缀，内部固定值。
         private static readonly string LockPrefix = "lock_";
 
+        // 客户元数据的键前缀，内部固定值。
+        private static readonly string MetaDataPrefix = "meta_";
+
+        // 子节点业务数据的键前缀，内部固定值。
+        private static readonly string NodePrefix = "node_";
+
         /* 获得客户 */
-        public static async Task<ClientContext.Types.Client> GetClient(string clientId)
+        public static async Task<Client> GetClient(string clientId)
         {
             var db = Constants.Redis.GetDatabase();
-            byte[] rawBytes = await db.StringGetAsync(Constants.KeyPrefix + Constants.ContextKeyName);
-            if (rawBytes != null)
-            {
-                ClientContext clientContext = ClientContext.Parser.ParseFrom(rawBytes);
-                foreach (var client in clientContext.Clients)
-                {
-                    if (client.ClientId.ToLower() == clientId.ToLower()) return client;
-                }
-            }
+            byte[] rawBytes = await db.StringGetAsync(Constants.KeyPrefix + MetaDataPrefix + clientId);
+            if (rawBytes != null) return Client.Parser.ParseFrom(rawBytes);
             return null;
         }
 
@@ -31,7 +30,7 @@ namespace Collplex.Core
         public static async Task<NodeData> GetNodeData(string clientId)
         {
             var db = Constants.Redis.GetDatabase();
-            byte[] rawBytes = await db.StringGetAsync(Constants.KeyPrefix + clientId);
+            byte[] rawBytes = await db.StringGetAsync(Constants.KeyPrefix + NodePrefix + clientId);
             NodeData nodeData = null;
             if (rawBytes != null) nodeData = NodeData.Parser.ParseFrom(rawBytes);
             return nodeData;
@@ -41,14 +40,14 @@ namespace Collplex.Core
         public static async Task<bool> SetNodeData(string clientId, NodeData nodeData)
         {
             var db = Constants.Redis.GetDatabase();
-            return await db.StringSetAsync(Constants.KeyPrefix + clientId, nodeData.ToByteArray());
+            return await db.StringSetAsync(Constants.KeyPrefix + NodePrefix + clientId, nodeData.ToByteArray());
         }
 
         /* 锁定子节点的操作权限，即使未注册也能(必须)锁定(防止并发注册造成数据混乱) */
         public static async Task<string> LockNode(string clientId)
         {
             var db = Constants.Redis.GetDatabase();
-            string lockKeyName = Constants.KeyPrefix + LockPrefix + clientId;
+            string lockKeyName = Constants.KeyPrefix + LockPrefix + NodePrefix + clientId;
             string lockToken = Guid.NewGuid().ToString();
             uint lockCounter = 0;
             uint maxCounters = Constants.AcquireLockTimeoutSeconds * 1000 / 50;
@@ -69,7 +68,7 @@ namespace Collplex.Core
         public static async Task<bool> ReleaseNode(string clientId, string lockToken)
         {
             var db = Constants.Redis.GetDatabase();
-            string lockKeyName = Constants.KeyPrefix + LockPrefix + clientId;
+            string lockKeyName = Constants.KeyPrefix + LockPrefix + NodePrefix + clientId;
             return await db.LockReleaseAsync(lockKeyName, lockToken);
         }
 

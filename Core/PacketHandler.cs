@@ -24,6 +24,7 @@ namespace Collplex.Core
                 ResponseCodeType.NODE_REG_CUSTOM_SVC_LIMIT => "node: could not register more custom services",
                 ResponseCodeType.NODE_LOCK_TIMEOUT => "node: lock timeout",
                 ResponseCodeType.NODE_RESPONSE_ERROR => "node: response error",
+                ResponseCodeType.NODE_NETWORK_EXCEPTION => "node: network exception",
                 ResponseCodeType.NODE_RESPONSE_TIMEDOUT => "node: response timed out",
                 ResponseCodeType.SVC_INVALID_CLIENT_ID => "service: invalid clientId",
                 ResponseCodeType.SVC_NOT_FOUND => "service: requested key not found",

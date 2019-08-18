@@ -21,6 +21,7 @@ namespace Collplex.Models
         NODE_LOCK_TIMEOUT = 2003,
         NODE_RESPONSE_ERROR = 2004,
         NODE_RESPONSE_TIMEDOUT = 2005,
+        NODE_NETWORK_EXCEPTION = 2006,
         SVC_INVALID_CLIENT_ID = 3000,
         SVC_NOT_FOUND = 3001
     }

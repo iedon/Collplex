@@ -24,9 +24,6 @@ namespace Collplex.Core
         // Redis 键名前缀
         public static string KeyPrefix { get; set; }
 
-        // Redis 客户上下文数据键名，内部固定值。
-        public static string ContextKeyName { get; set; }
-
         // Redis 获锁超时时间
         public static uint AcquireLockTimeoutSeconds { get; set; }
 

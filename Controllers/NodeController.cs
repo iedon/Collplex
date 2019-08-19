@@ -42,7 +42,7 @@ namespace Collplex.Controllers
                     InboundRegisterRequest payload;
                     try
                     {
-                        payload = Utils.JsonDeSerialize<InboundRegisterRequest>(jsonPayload);
+                        payload = Utils.JsonDeserialize<InboundRegisterRequest>(jsonPayload);
                     }
                     catch
                     {
@@ -55,7 +55,7 @@ namespace Collplex.Controllers
                     InboundDestroyRequest payload;
                     try
                     {
-                        payload = Utils.JsonDeSerialize<InboundDestroyRequest>(jsonPayload);
+                        payload = Utils.JsonDeserialize<InboundDestroyRequest>(jsonPayload);
                     }
                     catch
                     {

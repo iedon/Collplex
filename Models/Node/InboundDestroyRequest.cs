@@ -9,6 +9,6 @@ namespace Collplex.Models.Node
     public class InboundDestroyRequest
     {
         // 子节点的业务 Key 元组
-        public List<string> Keys;
+        public List<string> Keys { get; set; }
     }
 }

@@ -6,9 +6,9 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using StackExchange.Redis;
-using Newtonsoft.Json.Serialization;
 using Collplex.Core;
 using Collplex.Models;
+using System.Text.Json;
 
 
 /*  iEdon Collplex Tiny MicroService SuperNode  */
@@ -64,19 +64,16 @@ namespace Collplex
 
             // 注入路由和控制器
             services.AddRouting();
-            services.AddControllers().ConfigureApiBehaviorOptions(options =>
+            services.AddControllers()
+            .ConfigureApiBehaviorOptions(options =>
             {
                 options.SuppressModelStateInvalidFilter = true;
-            })/*.AddJsonOptions(options => {    目前用不了 System.Text.Json
-                // 不美化输出
-                options.JsonSerializerOptions.WriteIndented = false;
-                // 采用驼峰命名法命名输出变量
-                options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-                options.JsonSerializerOptions.DictionaryKeyPolicy = JsonNamingPolicy.CamelCase;
-            })*/
-            .AddNewtonsoftJson(options =>
-           options.SerializerSettings.ContractResolver =
-              new CamelCasePropertyNamesContractResolver());
+            })
+            .AddJsonOptions(options => {
+                options.JsonSerializerOptions.WriteIndented = Constants.JsonSerializerOptionsGlobal.WriteIndented;
+                options.JsonSerializerOptions.PropertyNamingPolicy = Constants.JsonSerializerOptionsGlobal.PropertyNamingPolicy;
+                options.JsonSerializerOptions.DictionaryKeyPolicy = Constants.JsonSerializerOptionsGlobal.DictionaryKeyPolicy;
+            });
         }
 
         public void Configure(IApplicationBuilder app)

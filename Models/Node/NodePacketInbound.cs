@@ -9,21 +9,21 @@ namespace Collplex.Models.Node
     public class NodePacketInbound
     {
         // 子节点请求签名
-        public string Signature;
+        public string Signature { get; set; }
 
         // 子节点响应时间戳
-        public long Timestamp;
+        public long Timestamp { get; set; }
 
         // 子节点应用ID
-        public string ClientId;
+        public string ClientId { get; set; }
 
         // 子节点请求的业务
-        public string Action;
+        public string Action { get; set; }
 
         // 子节点加密初始化向量
-        public string Iv;
+        public string Iv { get; set; }
 
         // 子节点交互所用到的数据
-        public string Data;
+        public string Data { get; set; }
     }
 }

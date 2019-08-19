@@ -9,15 +9,15 @@ namespace Collplex.Models.Node
     public class NodePacketOutbound
     {
         // 中心节点请求签名
-        public string Signature;
+        public string Signature { get; set; }
 
         // 中心节点响应时间戳
-        public long Timestamp;
+        public long Timestamp { get; set; }
 
         // 中心节点加密初始化向量
-        public string Iv;
+        public string Iv { get; set; }
 
         // 请求数据
-        public string Data;
+        public string Data { get; set; }
     }
 }

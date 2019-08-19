@@ -6,8 +6,8 @@ namespace Collplex.Models
 {
     public class ServiceRequest
     {
-        public string ClientId;
-        public string Key;
-        public object Data;
+        public string ClientId { get; set; }
+        public string Key { get; set; }
+        public object Data { get; set; }
     }
 }

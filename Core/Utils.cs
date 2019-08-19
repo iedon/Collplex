@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Security.Cryptography;
 using System.Text;
-using Newtonsoft.Json;
+using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace Collplex.Core
 {
@@ -91,14 +93,12 @@ namespace Collplex.Core
         }
 
         public static string JsonSerialize<T>(T rawObject)
-            => JsonConvert.SerializeObject(rawObject, Formatting.None,
-                    new JsonSerializerSettings
-                    {
-                        ContractResolver = new Newtonsoft.Json.Serialization.CamelCasePropertyNamesContractResolver()
-                    }
-                );
+            => JsonSerializer.Serialize(rawObject, Constants.JsonSerializerOptionsGlobal);
 
-        public static T JsonDeSerialize<T>(string jsonText)
-            => JsonConvert.DeserializeObject<T>(jsonText);
+        public static T JsonDeserialize<T>(string jsonText)
+            => JsonSerializer.Deserialize<T>(jsonText, Constants.JsonSerializerOptionsGlobal);
+
+        public async static Task<T> JsonDeserializeAsync<T>(Stream utf8JsonStream)
+            => await JsonSerializer.DeserializeAsync<T>(utf8JsonStream, Constants.JsonSerializerOptionsGlobal);
     }
 }

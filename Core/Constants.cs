@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Text.Json;
 using StackExchange.Redis;
 
 namespace Collplex.Core
@@ -9,6 +10,14 @@ namespace Collplex.Core
     public static class Constants
     {
         public static string JsonContentType = "application/json";
+        public static JsonSerializerOptions JsonSerializerOptionsGlobal = new JsonSerializerOptions()
+        {
+            // 不美化输出(即采用压缩输出而不格式化)
+            WriteIndented = false,
+            // 采用驼峰命名法命名输出变量
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            DictionaryKeyPolicy = JsonNamingPolicy.CamelCase
+        };
 
         /* ---------- 以下这些属性都在初始化的时候设置 ---------- */
 

@@ -17,7 +17,7 @@ namespace Collplex.Core
             {
                 var originalStatusCode = context.Response.StatusCode;
                 context.Response.StatusCode = StatusCodes.Status200OK;
-                context.Response.ContentType = Constants.JsonContentType;
+                context.Response.ContentType = Constants.JsonContentType + "; charset=utf-8";
                 await context.Response.WriteAsync(Utils.JsonSerialize(MakeCommonErrorResponse(originalStatusCode)));
             });
         });

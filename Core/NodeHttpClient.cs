@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Text;
@@ -34,14 +35,15 @@ namespace Collplex.Core
             }
             try
             {
-                string httpBody = await response.Content.ReadAsStringAsync();
-                ResponsePacket responsePacket = Utils.JsonDeSerialize<ResponsePacket>(httpBody);
+                using Stream httpBody = await response.Content.ReadAsStreamAsync();
+                // 这里使用流解析响应数据包，提高性能
+                ResponsePacket responsePacket = await Utils.JsonDeserializeAsync<ResponsePacket>(httpBody);
                 if (responsePacket.Code != ResponseCodeType.OK)
                 {
                     return null;
                 }
                 string decryptedData = Utils.CommonDecrypt(responsePacket.Data.ToString(), clientSecret, iv);
-                return Utils.JsonDeSerialize<object>(decryptedData);
+                return Utils.JsonDeserialize<object>(decryptedData);
             }
             catch
             {

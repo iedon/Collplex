@@ -29,8 +29,8 @@ namespace Collplex.Models
 
     public class ResponsePacket
     {
-        public ResponseCodeType Code;
-        public string Message;
-        public object Data;
+        public ResponseCodeType Code { get; set; }
+        public string Message { get; set; }
+        public object Data { get; set; }
     }
 }

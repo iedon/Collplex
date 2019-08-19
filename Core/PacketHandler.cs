@@ -28,6 +28,7 @@ namespace Collplex.Core
                 ResponseCodeType.NODE_RESPONSE_TIMEDOUT => "node: response timed out",
                 ResponseCodeType.SVC_INVALID_CLIENT_ID => "service: invalid clientId",
                 ResponseCodeType.SVC_NOT_FOUND => "service: requested key not found",
+                ResponseCodeType.SVC_UNAVAILABLE => "service: unavailable",
                 _ => "unknown",
             };
         }

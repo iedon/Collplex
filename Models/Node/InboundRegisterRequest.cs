@@ -19,8 +19,8 @@ namespace Collplex.Models.Node
             // 子节点服务所在的 URL
             public string NodeUrl;
 
-            // 子节点的服务是否必须经过中心服务器的鉴权后才能被访问
-            public bool RequireAuth;
+            // 子节点的服务是是否只对同主体的其他子节点开放，如果为 False，则子节点的业务外网可达
+            public bool Private;
         }
 
         // 子节点注册的业务元组

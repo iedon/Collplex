@@ -53,7 +53,7 @@ namespace Collplex.Controllers
                 case NodeActionEnum.DESTROY:
                 {
                     InboundDestroyRequest payload;
-                        try
+                    try
                     {
                         payload = Utils.JsonDeSerialize<InboundDestroyRequest>(jsonPayload);
                     }
@@ -105,17 +105,18 @@ namespace Collplex.Controllers
                             break;
                         }
                     }
+
                     if (service == null) // 此业务未注册，填充新服务信息，然后加到注册中心
                     {
+                        // 自定义业务超出数量限制
+                        if (nodeData.Services.Count >= client.MaxServices)
+                            return PacketHandler.MakeResponse(ResponseCodeType.NODE_REG_CUSTOM_SVC_LIMIT);
+
                         service = new NodeData.Types.NodeService
                         {
                             Key = serviceToRegister.Key,
                             RegTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
                         };
-
-                        // 自定义业务超出数量限制
-                        if (nodeData.Services.Count >= client.MaxServices)
-                            return PacketHandler.MakeResponse(ResponseCodeType.NODE_REG_CUSTOM_SVC_LIMIT);
 
                         nodeData.Services.Add(service);
                     }
@@ -123,7 +124,7 @@ namespace Collplex.Controllers
                     // 更新业务信息
                     service.Name = serviceToRegister.Name;
                     service.NodeUrl = serviceToRegister.NodeUrl;
-                    service.RequireAuth = serviceToRegister.RequireAuth;
+                    service.Private = serviceToRegister.Private;
 
                     // 此业务已经注册且本次存活 / 新注册的业务，为其更新过期时间
                     service.ExpireTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds() + client.RegIntervalSeconds;

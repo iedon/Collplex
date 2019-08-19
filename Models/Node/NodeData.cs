@@ -24,16 +24,16 @@ namespace Collplex.Models.Node {
     static NodeDataReflection() {
       byte[] descriptorData = global::System.Convert.FromBase64String(
           string.Concat(
-            "Cg5Ob2RlRGF0YS5wcm90bxIUQ29sbHBsZXguTW9kZWxzLk5vZGUixwEKCE5v",
+            "Cg5Ob2RlRGF0YS5wcm90bxIUQ29sbHBsZXguTW9kZWxzLk5vZGUiwwEKCE5v",
             "ZGVEYXRhEjwKCHNlcnZpY2VzGAEgAygLMiouQ29sbHBsZXguTW9kZWxzLk5v",
-            "ZGUuTm9kZURhdGEuTm9kZVNlcnZpY2UafQoLTm9kZVNlcnZpY2USCwoDa2V5",
-            "GAEgASgJEgwKBG5hbWUYAiABKAkSDwoHbm9kZVVybBgDIAEoCRITCgtyZXF1",
-            "aXJlQXV0aBgEIAEoCBIUCgxyZWdUaW1lc3RhbXAYBSABKAMSFwoPZXhwaXJl",
-            "VGltZXN0YW1wGAYgASgDYgZwcm90bzM="));
+            "ZGUuTm9kZURhdGEuTm9kZVNlcnZpY2UaeQoLTm9kZVNlcnZpY2USCwoDa2V5",
+            "GAEgASgJEgwKBG5hbWUYAiABKAkSDwoHbm9kZVVybBgDIAEoCRIPCgdwcml2",
+            "YXRlGAQgASgIEhQKDHJlZ1RpbWVzdGFtcBgFIAEoAxIXCg9leHBpcmVUaW1l",
+            "c3RhbXAYBiABKANiBnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::Collplex.Models.Node.NodeData), global::Collplex.Models.Node.NodeData.Parser, new[]{ "Services" }, null, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::Collplex.Models.Node.NodeData.Types.NodeService), global::Collplex.Models.Node.NodeData.Types.NodeService.Parser, new[]{ "Key", "Name", "NodeUrl", "RequireAuth", "RegTimestamp", "ExpireTimestamp" }, null, null, null, null)})
+            new pbr::GeneratedClrTypeInfo(typeof(global::Collplex.Models.Node.NodeData), global::Collplex.Models.Node.NodeData.Parser, new[]{ "Services" }, null, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::Collplex.Models.Node.NodeData.Types.NodeService), global::Collplex.Models.Node.NodeData.Types.NodeService.Parser, new[]{ "Key", "Name", "NodeUrl", "Private", "RegTimestamp", "ExpireTimestamp" }, null, null, null, null)})
           }));
     }
     #endregion
@@ -194,7 +194,7 @@ namespace Collplex.Models.Node {
           key_ = other.key_;
           name_ = other.name_;
           nodeUrl_ = other.nodeUrl_;
-          requireAuth_ = other.requireAuth_;
+          private_ = other.private_;
           regTimestamp_ = other.regTimestamp_;
           expireTimestamp_ = other.expireTimestamp_;
           _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
@@ -247,17 +247,17 @@ namespace Collplex.Models.Node {
           }
         }
 
-        /// <summary>Field number for the "requireAuth" field.</summary>
-        public const int RequireAuthFieldNumber = 4;
-        private bool requireAuth_;
+        /// <summary>Field number for the "private" field.</summary>
+        public const int PrivateFieldNumber = 4;
+        private bool private_;
         /// <summary>
-        /// 本业务需要经过统一鉴权服务鉴权后才允许访问(即客户需要持有token才能访问) 
+        /// 子节点的服务是是否只对同主体的其他子节点开放，如果为 False，则子节点的业务外网可达 
         /// </summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        public bool RequireAuth {
-          get { return requireAuth_; }
+        public bool Private {
+          get { return private_; }
           set {
-            requireAuth_ = value;
+            private_ = value;
           }
         }
 
@@ -305,7 +305,7 @@ namespace Collplex.Models.Node {
           if (Key != other.Key) return false;
           if (Name != other.Name) return false;
           if (NodeUrl != other.NodeUrl) return false;
-          if (RequireAuth != other.RequireAuth) return false;
+          if (Private != other.Private) return false;
           if (RegTimestamp != other.RegTimestamp) return false;
           if (ExpireTimestamp != other.ExpireTimestamp) return false;
           return Equals(_unknownFields, other._unknownFields);
@@ -317,7 +317,7 @@ namespace Collplex.Models.Node {
           if (Key.Length != 0) hash ^= Key.GetHashCode();
           if (Name.Length != 0) hash ^= Name.GetHashCode();
           if (NodeUrl.Length != 0) hash ^= NodeUrl.GetHashCode();
-          if (RequireAuth != false) hash ^= RequireAuth.GetHashCode();
+          if (Private != false) hash ^= Private.GetHashCode();
           if (RegTimestamp != 0L) hash ^= RegTimestamp.GetHashCode();
           if (ExpireTimestamp != 0L) hash ^= ExpireTimestamp.GetHashCode();
           if (_unknownFields != null) {
@@ -345,9 +345,9 @@ namespace Collplex.Models.Node {
             output.WriteRawTag(26);
             output.WriteString(NodeUrl);
           }
-          if (RequireAuth != false) {
+          if (Private != false) {
             output.WriteRawTag(32);
-            output.WriteBool(RequireAuth);
+            output.WriteBool(Private);
           }
           if (RegTimestamp != 0L) {
             output.WriteRawTag(40);
@@ -374,7 +374,7 @@ namespace Collplex.Models.Node {
           if (NodeUrl.Length != 0) {
             size += 1 + pb::CodedOutputStream.ComputeStringSize(NodeUrl);
           }
-          if (RequireAuth != false) {
+          if (Private != false) {
             size += 1 + 1;
           }
           if (RegTimestamp != 0L) {
@@ -403,8 +403,8 @@ namespace Collplex.Models.Node {
           if (other.NodeUrl.Length != 0) {
             NodeUrl = other.NodeUrl;
           }
-          if (other.RequireAuth != false) {
-            RequireAuth = other.RequireAuth;
+          if (other.Private != false) {
+            Private = other.Private;
           }
           if (other.RegTimestamp != 0L) {
             RegTimestamp = other.RegTimestamp;
@@ -436,7 +436,7 @@ namespace Collplex.Models.Node {
                 break;
               }
               case 32: {
-                RequireAuth = input.ReadBool();
+                Private = input.ReadBool();
                 break;
               }
               case 40: {

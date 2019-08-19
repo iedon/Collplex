@@ -15,8 +15,8 @@ message NodeData {
 		/* 子节点所对应的该业务的完整URL */
 		string nodeUrl = 3;
 
-		/* 本业务需要经过统一鉴权服务鉴权后才允许访问(即客户需要持有token才能访问) */
-		bool requireAuth = 4;
+		/* 子节点的服务是是否只对同主体的其他子节点开放，如果为 False，则子节点的业务外网可达 */
+		bool private = 4;
 
 		/* UNIX 时间戳 首次注册的时间 */
 		int64 regTimestamp = 5;

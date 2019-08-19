@@ -35,6 +35,10 @@ namespace Collplex.Controllers
         [HttpPost]
         public async Task<ResponsePacket> ServiceMain([FromBody] ServiceRequest request)
         {
+            // 初始化请求计时器并开始计时处理时间
+            Stopwatch requestWatch = new Stopwatch();
+            requestWatch.Start();
+
             // 获取并处理最终用户的 User-Agent 头部。
             string userAgentSingle = string.Empty;
             if (HttpContext.Request.Headers.TryGetValue("user-agent", out var uaHeaders) && uaHeaders.Count > 0)
@@ -43,8 +47,6 @@ namespace Collplex.Controllers
                 userAgentSingle = uaHeaders.ToArray()[0];
             }
 
-            Stopwatch requestWatch = new Stopwatch();
-            requestWatch.Start();
             ServiceLog requestLog = new ServiceLog() {
                 RequestBegin = DateTime.Now,
                 Key = request.Key ?? string.Empty,
@@ -56,13 +58,13 @@ namespace Collplex.Controllers
 
             if (!PacketHandler.ValidateRequest(request))
             {
-                if (!string.IsNullOrEmpty(request.ClientId))
+                if (string.IsNullOrEmpty(request.ClientId))
                 {
-                    LogRequest(requestLog, request.ClientId, ResponseCodeType.BAD_REQUEST, requestWatch);
+                    requestWatch.Stop();
                 }
                 else
                 {
-                    requestWatch.Start();
+                    LogRequest(requestLog, request.ClientId, ResponseCodeType.BAD_REQUEST, requestWatch);
                 }
                 return PacketHandler.MakeResponse(ResponseCodeType.BAD_REQUEST);
             }
@@ -79,7 +81,7 @@ namespace Collplex.Controllers
             NodeData.Types.NodeService service = null;
             foreach (NodeData.Types.NodeService svc in nodeData.Services)
             {
-                if (svc.Key == request.Key.ToLower())
+                if (svc.Key == request.Key.ToLower() && svc.Private == false)
                 {
                     service = svc;
                     break;
@@ -90,6 +92,12 @@ namespace Collplex.Controllers
             {
                 LogRequest(requestLog, request.ClientId, ResponseCodeType.SVC_NOT_FOUND, requestWatch);
                 return PacketHandler.MakeResponse(ResponseCodeType.SVC_NOT_FOUND);
+            }
+
+            if (DateTimeOffset.UtcNow.ToUnixTimeSeconds() > service.ExpireTimestamp) // 业务已过期
+            {
+                LogRequest(requestLog, request.ClientId, ResponseCodeType.SVC_UNAVAILABLE, requestWatch);
+                return PacketHandler.MakeResponse(ResponseCodeType.SVC_UNAVAILABLE);
             }
 
             try

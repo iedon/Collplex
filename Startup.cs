@@ -8,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 using StackExchange.Redis;
 using Newtonsoft.Json.Serialization;
 using Collplex.Core;
+using Collplex.Models;
 
 
 /*  iEdon Collplex Tiny MicroService SuperNode  */
@@ -29,25 +30,25 @@ namespace Collplex
             // 读取并注入允许的反向代理主机配置
             services.Configure<ForwardedHeadersOptions>(options =>
             {
-                string AllowProxy = Configuration.GetValue<string>("AllowedProxyIP");
-                if (AllowProxy != string.Empty)
+                string[] allowProxyIPs = Configuration.GetValue<string[]>("AllowedProxyIPs");
+                if (allowProxyIPs != null && allowProxyIPs.Length != 0)
                 {
-                    string[] IPSets = AllowProxy.Trim().Split(",");
-                    foreach (string IP in IPSets)
+                    foreach (string ip in allowProxyIPs)
                     {
-                        options.KnownProxies.Add(IPAddress.Parse(IP.Trim()));
+                        options.KnownProxies.Add(IPAddress.Parse(ip.Trim()));
                     }
                 }
                 options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
             });
 
             // -- 配置子节点业务注册中心 Redis 数据库(初始化全局静态 Redis 调制器对象)
-            var DbSettings = Configuration.GetSection("DbSettings");
-            var RedisSettings = DbSettings.GetSection("Redis");
-            Constants.Redis = ConnectionMultiplexer.Connect(RedisSettings.GetValue<string>("ConfigurationString"));
-            Constants.KeyPrefix = RedisSettings.GetValue<string>("KeyPrefix");
-            Constants.AcquireLockTimeoutSeconds = RedisSettings.GetValue<uint>("AcquireLockTimeoutSeconds");
-            Constants.LockTimeoutSeconds = RedisSettings.GetValue<uint>("LockTimeoutSeconds");
+            var dbSettings = Configuration.GetSection("DbSettings");
+            var redisSettings = dbSettings.GetSection("Redis");
+            Constants.Redis = ConnectionMultiplexer.Connect(redisSettings.GetValue<string>("ConfigurationString"));
+            Constants.KeyPrefix = redisSettings.GetValue<string>("KeyPrefix");
+            Constants.AcquireLockTimeoutSeconds = redisSettings.GetValue<uint>("AcquireLockTimeoutSeconds");
+            Constants.LockTimeoutSeconds = redisSettings.GetValue<uint>("LockTimeoutSeconds");
+            Constants.MongoDBConnectionString = dbSettings.GetSection("MongoDB").GetValue<string>("ConnectionString");
 
             // 配置其他信息
             Constants.NodePacketInboundAntiReplaySeconds = Configuration.GetValue<uint>("NodePacketInboundAntiReplaySeconds");
@@ -57,6 +58,9 @@ namespace Collplex
 
             // 注入子节点访问客户端
             services.AddHttpClient<NodeHttpClient>();
+
+            // 注入 MongoDB 服务日志上下文
+            services.AddSingleton<IMongoRepository<ServiceLog>, MongoRepository<ServiceLog>>();
 
             // 注入路由和控制器
             services.AddRouting();

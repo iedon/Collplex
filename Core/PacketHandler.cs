@@ -66,7 +66,7 @@ namespace Collplex.Core
 
         public static bool ValidateRequest(ServiceRequest request)
         {
-            if (request == null || request.ClientId == null || request.Key == null)
+            if (request == null || string.IsNullOrEmpty(request.ClientId) || string.IsNullOrEmpty(request.Key))
                 return false;
             return true;
         }
@@ -74,12 +74,12 @@ namespace Collplex.Core
         public static bool ValidateNodePacketInbound(NodePacketInbound request)
         {
             if (request == null
-                || request.ClientId == null
-                || request.Signature == null
+                || string.IsNullOrEmpty(request.ClientId)
+                || string.IsNullOrEmpty(request.Signature)
                 || request.Timestamp <= 0
-                || request.Action == null
-                || request.Iv == null
-                || request.Data == null)
+                || string.IsNullOrEmpty(request.Action)
+                || string.IsNullOrEmpty(request.Iv)
+                || string.IsNullOrEmpty(request.Data))
                 return false;
 
             // 防止重放攻击，如果用户 Timestamp 造假，则会在后面 DecryptNodePacketInbound() 签名验证环节被发现和拦截。

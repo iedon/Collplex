@@ -5,20 +5,24 @@ using Microsoft.AspNetCore.Mvc;
 using Collplex.Core;
 using Collplex.Models;
 using Collplex.Models.Node;
-using System.Net.Http;
+using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace Collplex.Controllers
 {
     // 业务控制器
     public class ServiceController : AppBaseController
     {
+        private readonly ILogger<ServiceController> logger;
         private readonly NodeHttpClient httpClient;
+        private readonly IMongoRepository<ServiceLog> mongoRepository;
 
-        public ServiceController(NodeHttpClient httpClient)
+        public ServiceController(ILogger<ServiceController> logger, NodeHttpClient httpClient, IMongoRepository<ServiceLog> mongoRepository)
         {
+            this.logger = logger;
             this.httpClient = httpClient;
+            this.mongoRepository = mongoRepository;
         }
-
 
         [Route("/service")]
         public ResponsePacket ServiceMain()
@@ -31,14 +35,46 @@ namespace Collplex.Controllers
         [HttpPost]
         public async Task<ResponsePacket> ServiceMain([FromBody] ServiceRequest request)
         {
+            // 获取并处理最终用户的 User-Agent 头部。
+            string userAgentSingle = string.Empty;
+            if (HttpContext.Request.Headers.TryGetValue("user-agent", out var uaHeaders) && uaHeaders.Count > 0)
+            {
+                // 因为 ASP.NET 允许最终用户有多个头，而 UA 正常情况下只发送一个，因此只取一个值
+                userAgentSingle = uaHeaders.ToArray()[0];
+            }
+
+            Stopwatch requestWatch = new Stopwatch();
+            requestWatch.Start();
+            ServiceLog requestLog = new ServiceLog() {
+                RequestBegin = DateTime.Now,
+                Key = request.Key ?? string.Empty,
+                Ip = HttpContext.Connection.RemoteIpAddress.ToString(),
+                UA = userAgentSingle,
+                Data = (request.Data != null) ? request.Data.ToString() : string.Empty,
+                ResponseCode = ResponseCodeType.OK,
+            };
+
             if (!PacketHandler.ValidateRequest(request))
+            {
+                if (!string.IsNullOrEmpty(request.ClientId))
+                {
+                    LogRequest(requestLog, request.ClientId, ResponseCodeType.BAD_REQUEST, requestWatch);
+                }
+                else
+                {
+                    requestWatch.Start();
+                }
                 return PacketHandler.MakeResponse(ResponseCodeType.BAD_REQUEST);
+            }
 
             request.ClientId = request.ClientId.ToLower();
             Client client = await NodeHelper.GetClient(request.ClientId);
             NodeData nodeData = await NodeHelper.GetNodeData(request.ClientId);
             if (client == null || nodeData == null)
+            {
+                LogRequest(requestLog, request.ClientId, ResponseCodeType.SVC_INVALID_CLIENT_ID, requestWatch);
                 return PacketHandler.MakeResponse(ResponseCodeType.SVC_INVALID_CLIENT_ID);
+            }
 
             NodeData.Types.NodeService service = null;
             foreach (NodeData.Types.NodeService svc in nodeData.Services)
@@ -51,17 +87,13 @@ namespace Collplex.Controllers
             }
 
             if (service == null) // 服务未注册
+            {
+                LogRequest(requestLog, request.ClientId, ResponseCodeType.SVC_NOT_FOUND, requestWatch);
                 return PacketHandler.MakeResponse(ResponseCodeType.SVC_NOT_FOUND);
+            }
 
             try
             {
-                // 获取并处理最终用户的 User-Agent 头部。
-                string userAgentSingle = string.Empty;
-                if (HttpContext.Request.Headers.TryGetValue("user-agent", out var uaHeaders) && uaHeaders.Count > 0)
-                {
-                    // 因为 ASP.NET 允许最终用户有多个头，而 UA 正常情况下只发送一个，因此只取一个值
-                    userAgentSingle = uaHeaders.ToArray()[0];
-                }
                 OutboundRequest outboundRequest = new OutboundRequest()
                 {
                     RemoteIp = HttpContext.Connection.RemoteIpAddress.ToString(),
@@ -73,19 +105,37 @@ namespace Collplex.Controllers
                 object data = await httpClient.RequestNodeService(service.NodeUrl, outboundRequest, client.Timeout, request.ClientId, client.ClientSecret);
                 if (data == null)
                 {
+                    LogRequest(requestLog, request.ClientId, ResponseCodeType.NODE_RESPONSE_ERROR, requestWatch);
                     return PacketHandler.MakeResponse(ResponseCodeType.NODE_RESPONSE_ERROR);
                 }
+                LogRequest(requestLog, request.ClientId, ResponseCodeType.OK, requestWatch);
                 return PacketHandler.MakeResponse(ResponseCodeType.OK, data);
             }
             catch (TaskCanceledException)
             {
+                LogRequest(requestLog, request.ClientId, ResponseCodeType.NODE_RESPONSE_TIMEDOUT, requestWatch);
                 return PacketHandler.MakeResponse(ResponseCodeType.NODE_RESPONSE_TIMEDOUT);
             }
             catch
             {
+                LogRequest(requestLog, request.ClientId, ResponseCodeType.NODE_NETWORK_EXCEPTION, requestWatch);
                 return PacketHandler.MakeResponse(ResponseCodeType.NODE_NETWORK_EXCEPTION);
             }
         }
 
+        private void LogRequest(ServiceLog requestLog, string clientId, ResponseCodeType responseCode, Stopwatch requestWatch)
+        {
+            try
+            {
+                requestWatch.Stop();
+                requestLog.ResponseCode = responseCode;
+                requestLog.TimeTakenMs = requestWatch.ElapsedMilliseconds;
+                mongoRepository.Add(requestLog, clientId, requestLog.GetType().Name);
+            }
+            catch (Exception exception)
+            {
+                logger.LogError("Error logging service request: " + exception.Message);
+            }
+        }
     }
 }

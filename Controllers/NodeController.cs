@@ -81,7 +81,7 @@ namespace Collplex.Controllers
 
             // 锁定节点，可以有效避免并发注册的问题
             string nodeLock = await NodeHelper.LockNode(clientId);
-            if (nodeLock == null)
+            if (string.IsNullOrEmpty(nodeLock))
                 return PacketHandler.MakeResponse(ResponseCodeType.NODE_LOCK_TIMEOUT);
 
             try
@@ -91,7 +91,7 @@ namespace Collplex.Controllers
 
                 foreach (var serviceToRegister in data.Services) // 用户提交的 Service
                 {
-                    if (serviceToRegister.Key == null || serviceToRegister.Name == null || serviceToRegister.NodeUrl == null)
+                    if (string.IsNullOrEmpty(serviceToRegister.Key) || string.IsNullOrEmpty(serviceToRegister.Name) || string.IsNullOrEmpty(serviceToRegister.NodeUrl))
                         return PacketHandler.MakeResponse(ResponseCodeType.INVALID_BODY);
 
                     serviceToRegister.Key = serviceToRegister.Key.ToLower(); // 业务 Key 强制小写
@@ -151,7 +151,7 @@ namespace Collplex.Controllers
 
             // 锁定节点，可以有效避免并发注册的问题
             string nodeLock = await NodeHelper.LockNode(clientId);
-            if (nodeLock == null)
+            if (string.IsNullOrEmpty(nodeLock))
                 return PacketHandler.MakeResponse(ResponseCodeType.NODE_LOCK_TIMEOUT);
 
             try
@@ -162,7 +162,7 @@ namespace Collplex.Controllers
 
                 foreach (var key in data.Keys)
                 {
-                    if (key == null)
+                    if (string.IsNullOrEmpty(key))
                         return PacketHandler.MakeResponse(ResponseCodeType.INVALID_BODY);
 
                     NodeData.Types.NodeService service = null;

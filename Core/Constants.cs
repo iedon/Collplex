@@ -36,5 +36,8 @@ namespace Collplex.Core
         // 本中心节点请求子节点业务时所使用的 User-Agent
         public static string NodeHttpClientUserAgent { get; set; }
 
+        // 用作请求日志服务的 MongoDB 数据库连接字符串
+        public static string MongoDBConnectionString { get; set; }
+
     }
 }

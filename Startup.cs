@@ -1,18 +1,22 @@
 ﻿using System;
 using System.Net;
+using System.Linq;
 using System.Reflection;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
+using Microsoft.ApplicationInsights.DependencyCollector;
+using Microsoft.ApplicationInsights.Extensibility;
 using StackExchange.Redis;
+using MongoDB.Driver;
 using Collplex.Core;
 using Collplex.Models;
-using System.Text.Json;
 
 
 /*  iEdon Collplex Tiny MicroService SuperNode  */
 /*           Copyright (C) 2019 iEdon.          */
+
 
 namespace Collplex
 {
@@ -48,7 +52,9 @@ namespace Collplex
             Constants.KeyPrefix = redisSettings.GetValue<string>("KeyPrefix");
             Constants.AcquireLockTimeoutSeconds = redisSettings.GetValue<uint>("AcquireLockTimeoutSeconds");
             Constants.LockTimeoutSeconds = redisSettings.GetValue<uint>("LockTimeoutSeconds");
-            Constants.MongoDBConnectionString = dbSettings.GetSection("MongoDB").GetValue<string>("ConnectionString");
+
+            // -- 配置 MongoDB 业务日志数据库
+            Constants.MongoDB = new MongoClient(dbSettings.GetSection("MongoDB").GetValue<string>("ConnectionString"));
 
             // 配置其他信息
             Constants.NodePacketInboundAntiReplaySeconds = Configuration.GetValue<uint>("NodePacketInboundAntiReplaySeconds");
@@ -74,6 +80,14 @@ namespace Collplex
                 options.JsonSerializerOptions.PropertyNamingPolicy = Constants.JsonSerializerOptionsGlobal.PropertyNamingPolicy;
                 options.JsonSerializerOptions.DictionaryKeyPolicy = Constants.JsonSerializerOptionsGlobal.DictionaryKeyPolicy;
             });
+
+            // 移除框架为 HttpClient 自动加的 Correlation ID HTTP Header
+            var module = services.FirstOrDefault(t => t.ImplementationFactory?.GetType() == typeof(Func<IServiceProvider, DependencyTrackingTelemetryModule>));
+            if (module != null)
+            {
+                services.Remove(module);
+                services.AddSingleton<ITelemetryModule>(provider => new DependencyTrackingTelemetryModule() { SetComponentCorrelationHttpHeaders = false });
+            }
         }
 
         public void Configure(IApplicationBuilder app)

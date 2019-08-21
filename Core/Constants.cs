@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text.Json;
+using MongoDB.Driver;
 using StackExchange.Redis;
 
 namespace Collplex.Core
@@ -45,8 +46,8 @@ namespace Collplex.Core
         // 本中心节点请求子节点业务时所使用的 User-Agent
         public static string NodeHttpClientUserAgent { get; set; }
 
-        // 用作请求日志服务的 MongoDB 数据库连接字符串
-        public static string MongoDBConnectionString { get; set; }
+        // 在 Startup.cs 中初始化此 MongoDB 对象
+        public static MongoClient MongoDB { get; set; }
 
     }
 }

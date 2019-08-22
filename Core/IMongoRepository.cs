@@ -18,7 +18,7 @@ namespace Collplex.Core
         /// 对指定的库与表中新增数据
         /// </summary>
         /// <returns></returns>
-        Task<bool> Add(List<T> list, string dbName, string tableName = "");
-        Task<bool> Add(T document, string dbName, string tableName = "");
+        Task Add(List<T> list, string dbName, string tableName = "");
+        Task Add(T document, string dbName, string tableName = "");
     }
 }

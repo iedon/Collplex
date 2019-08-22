@@ -58,24 +58,24 @@ namespace Collplex.Controllers
 
             if (!PacketHandler.ValidateRequest(request))
             {
-                if (string.IsNullOrEmpty(request.ClientId))
-                {
-                    requestWatch.Stop();
-                }
-                else
-                {
-                    LogRequest(requestLog, request.ClientId, ResponseCodeType.BAD_REQUEST, requestWatch);
-                }
+                // Bad Request 不记录日志，以防垃圾信息堆积。
+                requestWatch.Stop();
                 return PacketHandler.MakeResponse(ResponseCodeType.BAD_REQUEST);
             }
 
             request.ClientId = request.ClientId.ToLower();
             Client client = await NodeHelper.GetClient(request.ClientId);
             NodeData nodeData = await NodeHelper.GetNodeData(request.ClientId);
-            if (client == null || nodeData == null)
+            if (client == null)
             {
-                LogRequest(requestLog, request.ClientId, ResponseCodeType.SVC_INVALID_CLIENT_ID, requestWatch);
+                // clientId 找不到就不记录日志。否则数据库中会充满这些未注册的 clientId 的垃圾数据。
+                requestWatch.Stop();
                 return PacketHandler.MakeResponse(ResponseCodeType.SVC_INVALID_CLIENT_ID);
+            }
+            if (nodeData == null)
+            {
+                LogRequest(requestLog, request.ClientId, ResponseCodeType.SVC_NOT_FOUND, requestWatch);
+                return PacketHandler.MakeResponse(ResponseCodeType.SVC_NOT_FOUND);
             }
 
             NodeData.Types.NodeService service = null;

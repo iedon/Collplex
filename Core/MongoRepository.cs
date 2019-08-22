@@ -44,10 +44,10 @@ namespace Collplex.Core
         /// </summary>
         /// <typeparam name="TEntity"></typeparam>
         /// <returns></returns>
-        private static async Task<bool> CollectionExistsAsync<TEntity>(string dbName, string name)
+        private static async Task<bool> CollectionExistsAsync<TEntity>(string dbName, string collectionName)
         {
             var DbContext = Constants.MongoDB.GetDatabase(dbName);
-            var filter = new BsonDocument("name", name);
+            var filter = new BsonDocument("name", collectionName);
             // 通过集合名称过滤
             var collections = await DbContext.ListCollectionsAsync(new ListCollectionsOptions { Filter = filter });
             // 检查是否存在
@@ -69,22 +69,20 @@ namespace Collplex.Core
         /// 对指定的库与表中新增多条数据
         /// </summary>
         /// <returns></returns>
-        public async Task<bool> Add(List<T> list, string dbName, string tableName = "")
+        public async Task Add(List<T> list, string dbName, string tableName = "")
         {
             var collection = await GetCollectionAsync<T>(dbName, tableName);
             await collection.InsertManyAsync(list);
-            return true;
         }
 
         /// <summary>
         /// 对指定的库与表中新增单条数据
         /// </summary>
         /// <returns></returns>
-        public async Task<bool> Add(T document, string dbName, string tableName = "")
+        public async Task Add(T document, string dbName, string tableName = "")
         {
             var collection = await GetCollectionAsync<T>(dbName, tableName);
             await collection.InsertOneAsync(document);
-            return true;
         }
     }
 }

@@ -81,12 +81,11 @@ namespace Collplex
                 options.JsonSerializerOptions.DictionaryKeyPolicy = Constants.JsonSerializerOptionsGlobal.DictionaryKeyPolicy;
             });
 
-            // 移除框架为 HttpClient 自动加的 Correlation ID HTTP Header
+            // 移除框架为 HttpClient 自动加的 Correlation ID HTTP Header(完全移除依赖跟踪遥测)
             var module = services.FirstOrDefault(t => t.ImplementationFactory?.GetType() == typeof(Func<IServiceProvider, DependencyTrackingTelemetryModule>));
             if (module != null)
             {
                 services.Remove(module);
-                services.AddSingleton<ITelemetryModule>(provider => new DependencyTrackingTelemetryModule() { SetComponentCorrelationHttpHeaders = false });
             }
         }
 

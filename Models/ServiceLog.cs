@@ -13,6 +13,8 @@ namespace Collplex.Models
         public string Key { get; set; }
         /* 请求者 IP */
         public string Ip { get; set; }
+        /* 请求者端口 */
+        public int Port { get; set; }
         /* 请求者 User-Agent */
         public string UA { get; set; }
         /* 请求者的请求数据体 */

@@ -6,8 +6,6 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
-using Microsoft.ApplicationInsights.DependencyCollector;
-using Microsoft.ApplicationInsights.Extensibility;
 using StackExchange.Redis;
 using MongoDB.Driver;
 using Collplex.Core;
@@ -61,9 +59,11 @@ namespace Collplex
             Constants.AppName = Assembly.GetEntryAssembly().GetName().Name;
             Constants.AppVersion = Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
             Constants.NodeHttpClientUserAgent = Constants.AppName + "/" + Constants.AppVersion;
+            Constants.LogUserPayload = Configuration.GetValue<bool>("LogUserPayload");
+            Constants.NodeHttpClientLifeTimeSeconds = Configuration.GetValue<double>("NodeHttpClientLifeTimeSeconds");
 
             // 注入子节点访问客户端
-            services.AddHttpClient<NodeHttpClient>();
+            services.AddHttpClient<NodeHttpClient>().SetHandlerLifetime(TimeSpan.FromSeconds(Constants.NodeHttpClientLifeTimeSeconds));
 
             // 注入 MongoDB 服务日志上下文
             services.AddSingleton<IMongoRepository<ServiceLog>, MongoRepository<ServiceLog>>();
@@ -80,13 +80,6 @@ namespace Collplex
                 options.JsonSerializerOptions.PropertyNamingPolicy = Constants.JsonSerializerOptionsGlobal.PropertyNamingPolicy;
                 options.JsonSerializerOptions.DictionaryKeyPolicy = Constants.JsonSerializerOptionsGlobal.DictionaryKeyPolicy;
             });
-
-            // 移除框架为 HttpClient 自动加的 Correlation ID HTTP Header(完全移除依赖跟踪遥测)
-            var module = services.FirstOrDefault(t => t.ImplementationFactory?.GetType() == typeof(Func<IServiceProvider, DependencyTrackingTelemetryModule>));
-            if (module != null)
-            {
-                services.Remove(module);
-            }
         }
 
         public void Configure(IApplicationBuilder app)

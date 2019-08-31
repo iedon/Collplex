@@ -51,8 +51,9 @@ namespace Collplex.Controllers
                 RequestBegin = DateTime.Now,
                 Key = request.Key ?? string.Empty,
                 Ip = HttpContext.Connection.RemoteIpAddress.ToString(),
+                Port = HttpContext.Connection.RemotePort,
                 UA = userAgentSingle,
-                Data = (request.Data != null) ? request.Data.ToString() : string.Empty,
+                Data = (Constants.LogUserPayload && request.Data != null) ? request.Data.ToString() : string.Empty,
                 ResponseCode = ResponseCodeType.OK,
             };
 

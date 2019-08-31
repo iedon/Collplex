@@ -43,11 +43,16 @@ namespace Collplex.Core
         // 反重放攻击用，允许子节点请求的时间戳波动范围
         public static uint NodePacketInboundAntiReplaySeconds { get; set; }
 
-        // 本中心节点请求子节点业务时所使用的 User-Agent
+        // 本中心节点请求子节点业务时所使用的 HttpClient 的 User-Agent
         public static string NodeHttpClientUserAgent { get; set; }
 
         // 在 Startup.cs 中初始化此 MongoDB 对象
         public static MongoClient MongoDB { get; set; }
 
+        // 是否记录子节点请求过来的数据体(Body)，如果为是，则用户访问日志中将记录用户的请求数据体
+        public static bool LogUserPayload { get; set; }
+
+        // 请求子节点业务时所使用的 HttpClient 的生命周期，单位秒
+        public static double NodeHttpClientLifeTimeSeconds { get; set; }
     }
 }

@@ -59,6 +59,7 @@ namespace Collplex
             Constants.AppName = Assembly.GetEntryAssembly().GetName().Name;
             Constants.AppVersion = Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
             Constants.NodeHttpClientUserAgent = Constants.AppName + "/" + Constants.AppVersion;
+            Constants.LogUserRequest = Configuration.GetValue<bool>("LogUserRequest");
             Constants.LogUserPayload = Configuration.GetValue<bool>("LogUserPayload");
             Constants.NodeHttpClientLifeTimeSeconds = Configuration.GetValue<double>("NodeHttpClientLifeTimeSeconds");
 
@@ -86,13 +87,13 @@ namespace Collplex
         {
             app.UseForwardedHeaders();
 
-            // 设置路由与 Endpoint
-            app.UseRouting();
-            app.UseEndpoints(endpoints => endpoints.MapControllers());
-
             // 设置全局异常捕获与统一错误处理
             app.UseExceptionHandler(ErrorHandler.commonErrorHandler);
             app.UseStatusCodePages(ErrorHandler.commonErrorHandler);
+
+            // 设置路由与 Endpoint
+            app.UseRouting();
+            app.UseEndpoints(endpoints => endpoints.MapControllers());
         }
     }
 }

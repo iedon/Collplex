@@ -8,7 +8,6 @@ namespace Collplex.Models.Node
     public class OutboundRequest
     {
         public string RemoteIp { get; set; }
-        public int RemotePort { get; set; }
         public string UserAgent { get; set; }
         public object Payload { get; set; }
     }

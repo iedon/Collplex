@@ -59,7 +59,6 @@ namespace Collplex.Controllers
                     RequestBegin = DateTime.Now,
                     Key = request.Key ?? string.Empty,
                     Ip = HttpContext.Connection.RemoteIpAddress.ToString(),
-                    Port = HttpContext.Connection.RemotePort,
                     UA = userAgentSingle,
                     Data = (Constants.LogUserPayload && request.Data != null) ? request.Data.ToString() : string.Empty,
                     ResponseCode = ResponseCodeType.OK,
@@ -115,7 +114,6 @@ namespace Collplex.Controllers
                 OutboundRequest outboundRequest = new OutboundRequest()
                 {
                     RemoteIp = HttpContext.Connection.RemoteIpAddress.ToString(),
-                    RemotePort = HttpContext.Connection.RemotePort,
                     UserAgent = userAgentSingle,
                     Payload = request.Data
                 };

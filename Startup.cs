@@ -32,14 +32,12 @@ namespace Collplex
             // 读取并注入允许的反向代理主机配置
             services.Configure<ForwardedHeadersOptions>(options =>
             {
-                string[] allowProxyIPs = Configuration.GetValue<string[]>("AllowedProxyIPs");
-                if (allowProxyIPs != null && allowProxyIPs.Length != 0)
+                var allowedProxyIPs = Configuration.GetSection("AllowedProxyIPs").AsEnumerable().Where(ip => ip.Value != null);
+                foreach (var ip in allowedProxyIPs)
                 {
-                    foreach (string ip in allowProxyIPs)
-                    {
-                        options.KnownProxies.Add(IPAddress.Parse(ip.Trim()));
-                    }
+                    options.KnownProxies.Add(IPAddress.Parse(ip.Value.Trim()));
                 }
+                options.ForwardLimit = Configuration.GetValue<int>("XForwardedForLimit");
                 options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
             });
 
@@ -52,7 +50,7 @@ namespace Collplex
             Constants.LockTimeoutSeconds = redisSettings.GetValue<uint>("LockTimeoutSeconds");
 
             // -- 配置 MongoDB 业务日志数据库
-            Constants.MongoDB = new MongoClient(dbSettings.GetSection("MongoDB").GetValue<string>("ConnectionString"));
+            Constants.MongoDB = new MongoClient(dbSettings.GetSection("MongoDB").GetValue<string>("ConfigurationString"));
 
             // 配置其他信息
             Constants.NodePacketInboundAntiReplaySeconds = Configuration.GetValue<uint>("NodePacketInboundAntiReplaySeconds");

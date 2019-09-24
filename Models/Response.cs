@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace Collplex.Models
 {
-    public enum ResponseCodeType : ushort
+    public enum ResponseCodeType
     {
         OK = 0,
         SERVER_EXCEPTION = 1000,

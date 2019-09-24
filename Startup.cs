@@ -81,7 +81,7 @@ namespace Collplex
             });
         }
 
-        public void Configure(IApplicationBuilder app)
+        public static void Configure(IApplicationBuilder app)
         {
             app.UseForwardedHeaders();
 

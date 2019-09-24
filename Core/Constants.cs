@@ -10,7 +10,7 @@ namespace Collplex.Core
     // 此静态类的作用是在内存中维护一份配置供程序的各个模块使用
     public static class Constants
     {
-        public static string JsonContentType = "application/json";
+        public const string JsonContentType = "application/json";
         public static JsonSerializerOptions JsonSerializerOptionsGlobal = new JsonSerializerOptions()
         {
             // 不美化输出(即采用压缩输出而不格式化)

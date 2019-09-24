@@ -12,7 +12,7 @@ namespace Collplex.Controllers
         public DefaultController() {}
 
         [Route("~/")]
-        public ResponsePacket DefaultResponse()
+        public static ResponsePacket DefaultResponse()
             => PacketHandler.MakeResponse(ResponseCodeType.OK, new {
                     Name = Constants.AppName,
                     Version = Constants.AppVersion

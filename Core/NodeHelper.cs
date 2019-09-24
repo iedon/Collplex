@@ -9,13 +9,13 @@ namespace Collplex.Core
     public static class NodeHelper
     {
         // 操作子节点时所使用的锁的键前缀，内部固定值。
-        private static readonly string LockPrefix = "lock_";
+        private const string LockPrefix = "lock_";
 
         // 客户元数据的键前缀，内部固定值。
-        private static readonly string MetaDataPrefix = "meta_";
+        private const string MetaDataPrefix = "meta_";
 
         // 子节点业务数据的键前缀，内部固定值。
-        private static readonly string NodePrefix = "node_";
+        private const string NodePrefix = "node_";
 
         /* 获得客户 */
         public static async Task<Client> GetClient(string clientId)

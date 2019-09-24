@@ -28,7 +28,7 @@ namespace Collplex.Core
                 return null;
 
             using var content = new StringContent(Utils.JsonSerialize(packetOutbound), Encoding.UTF8, Constants.JsonContentType);
-            using var response = await Client.PostAsync(nodeServiceUrl, content);
+            using var response = await Client.PostAsync(new Uri(nodeServiceUrl), content);
             if (!response.IsSuccessStatusCode)
             {
                 return null;

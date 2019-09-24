@@ -13,7 +13,7 @@ namespace Collplex.Controllers
         public NodeController() {}
 
         [Route("/node")]
-        public ResponsePacket RegisterService()
+        public static ResponsePacket RegisterService()
             => PacketHandler.MakeResponse(ResponseCodeType.METHOD_NOT_ALLOWED);
 
         /*

@@ -25,7 +25,7 @@ namespace Collplex.Controllers
         }
 
         [Route("/service")]
-        public static ResponsePacket ServiceMain()
+        public ResponsePacket ServiceMain()
             => PacketHandler.MakeResponse(ResponseCodeType.METHOD_NOT_ALLOWED);
 
         /*

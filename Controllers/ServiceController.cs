@@ -35,6 +35,12 @@ namespace Collplex.Controllers
         [HttpPost]
         public async Task<ResponsePacket> ServiceMain([FromBody] ServiceRequest request)
         {
+            if (!PacketHandler.ValidateRequest(request))
+            {
+                // Bad Request 不记录日志，以防垃圾信息堆积。
+                return PacketHandler.MakeResponse(ResponseCodeType.BAD_REQUEST);
+            }
+
             Stopwatch requestWatch = null;
             if (Constants.LogUserRequest)
             {
@@ -63,13 +69,6 @@ namespace Collplex.Controllers
                     Data = (Constants.LogUserPayload && request.Data != null) ? request.Data.ToString() : string.Empty,
                     ResponseCode = ResponseCodeType.OK,
                 };
-            }
-
-            if (!PacketHandler.ValidateRequest(request))
-            {
-                // Bad Request 不记录日志，以防垃圾信息堆积。
-                if (Constants.LogUserRequest) requestWatch.Stop();
-                return PacketHandler.MakeResponse(ResponseCodeType.BAD_REQUEST);
             }
 
             request.ClientId = request.ClientId.ToLower();

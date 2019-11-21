@@ -11,14 +11,10 @@ namespace Collplex.Core
     public static class Utils
     {
         public static string CommonEncrypt(string rawData, string clientSecret, string iv)
-        {
-            return Aes256CBCEncrypt(rawData, clientSecret, iv);
-        }
+            => Aes256CBCEncrypt(rawData, clientSecret, iv);
 
         public static string CommonDecrypt(string rawData, string clientSecret, string iv)
-        {
-            return Aes256CBCDecrypt(rawData, clientSecret, iv);
-        }
+            => Aes256CBCDecrypt(rawData, clientSecret, iv);
 
         public static string Aes256CBCEncrypt(string plainText, string key, string iv)
         {

@@ -22,7 +22,6 @@
     <TieredCompilationQuickJit>true</TieredCompilationQuickJit>
     <PublishReadyToRun>true</PublishReadyToRun>
     <RuntimeIdentifier>win10-x64</RuntimeIdentifier>
-    <PublishTrimmed>true</PublishTrimmed>
     <Version>1.0.1</Version>
   </PropertyGroup>
 

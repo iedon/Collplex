@@ -2,14 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Collplex.Models;
 
 namespace Collplex.Models.Node
 {
-    public enum NodeActionEnum
+    public class InboundGetRequest
     {
-        REGISTER,
-        LIST,
-        GET,
-        DESTROY
+        // 子节点业务 Key
+        public string Key { get; set; }
     }
 }

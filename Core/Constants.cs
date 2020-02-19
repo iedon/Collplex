@@ -1,8 +1,11 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text.Json;
+using Collplex.Models.Node;
 using MongoDB.Driver;
+using Nito.AsyncEx;
 using StackExchange.Redis;
 
 namespace Collplex.Core
@@ -19,6 +22,8 @@ namespace Collplex.Core
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             DictionaryKeyPolicy = JsonNamingPolicy.CamelCase
         };
+
+        public static AsyncMonitor NodeEditLock = new AsyncMonitor();
 
         /* ---------- 以下这些属性都在初始化的时候设置 ---------- */
 
@@ -40,8 +45,17 @@ namespace Collplex.Core
         // Redis 超时时间(锁最大能够存在的时间)
         public static uint LockTimeoutSeconds { get; set; }
 
+        // 业务默认权重(当注册业务的时候不带 weight 显式指定权重时使用的默认值)
+        public static uint NodeDefaultWeight { get; set; }
+
         // 反重放攻击用，允许子节点请求的时间戳波动范围
         public static uint NodePacketInboundAntiReplaySeconds { get; set; }
+
+        // 指定会话上下文 GC 执行时间间隔，单位秒，指定 0 禁用会话状态回收
+        public static uint SessionContextGCIntervalSeconds { get; set; }
+
+        // 是否定期将会话上下文信息写到 Redis 中便于统计，单位秒，指定 0 禁用写入功能
+        public static uint WriteSessionContextToRedisIntervalSeconds { get; set; }
 
         // 本中心节点请求子节点业务时所使用的 HttpClient 的 User-Agent
         public static string NodeHttpClientUserAgent { get; set; }

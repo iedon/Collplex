@@ -18,4 +18,17 @@ message Client {
 
 	/* 允许中心节点请求子节点业务时的最大等待时间 */
 	int32 timeout = 5;
+
+	message LoadBalancerConfiguration {
+		string key = 1;
+		enum LoadBalanceType {
+			NO_LOAD_BALANCE = 0;
+			SMOOTH_WEIGHT_ROUND_ROBIN = 1;
+			LEAST_REQUESTS = 2;
+			RANDOM = 3;
+			SOURCE_IP_HASH = 4;	
+		}
+		LoadBalanceType type = 2;
+	}
+	repeated LoadBalancerConfiguration loadBalancerConfigurations = 6;
 }

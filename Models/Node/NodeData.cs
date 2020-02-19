@@ -24,16 +24,17 @@ namespace Collplex.Models.Node {
     static NodeDataReflection() {
       byte[] descriptorData = global::System.Convert.FromBase64String(
           string.Concat(
-            "Cg5Ob2RlRGF0YS5wcm90bxIUQ29sbHBsZXguTW9kZWxzLk5vZGUiwwEKCE5v",
+            "Cg5Ob2RlRGF0YS5wcm90bxIUQ29sbHBsZXguTW9kZWxzLk5vZGUi4gEKCE5v",
             "ZGVEYXRhEjwKCHNlcnZpY2VzGAEgAygLMiouQ29sbHBsZXguTW9kZWxzLk5v",
-            "ZGUuTm9kZURhdGEuTm9kZVNlcnZpY2UaeQoLTm9kZVNlcnZpY2USCwoDa2V5",
-            "GAEgASgJEgwKBG5hbWUYAiABKAkSDwoHbm9kZVVybBgDIAEoCRIPCgdwcml2",
-            "YXRlGAQgASgIEhQKDHJlZ1RpbWVzdGFtcBgFIAEoAxIXCg9leHBpcmVUaW1l",
-            "c3RhbXAYBiABKANiBnByb3RvMw=="));
+            "ZGUuTm9kZURhdGEuTm9kZVNlcnZpY2UalwEKC05vZGVTZXJ2aWNlEgwKBGhh",
+            "c2gYASABKAkSCwoDa2V5GAIgASgJEgwKBG5hbWUYAyABKAkSDwoHbm9kZVVy",
+            "bBgEIAEoCRIOCgZ3ZWlnaHQYBSABKAUSDwoHcHJpdmF0ZRgGIAEoCBIUCgxy",
+            "ZWdUaW1lc3RhbXAYByABKAMSFwoPZXhwaXJlVGltZXN0YW1wGAggASgDYgZw",
+            "cm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::Collplex.Models.Node.NodeData), global::Collplex.Models.Node.NodeData.Parser, new[]{ "Services" }, null, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::Collplex.Models.Node.NodeData.Types.NodeService), global::Collplex.Models.Node.NodeData.Types.NodeService.Parser, new[]{ "Key", "Name", "NodeUrl", "Private", "RegTimestamp", "ExpireTimestamp" }, null, null, null, null)})
+            new pbr::GeneratedClrTypeInfo(typeof(global::Collplex.Models.Node.NodeData), global::Collplex.Models.Node.NodeData.Parser, new[]{ "Services" }, null, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::Collplex.Models.Node.NodeData.Types.NodeService), global::Collplex.Models.Node.NodeData.Types.NodeService.Parser, new[]{ "Hash", "Key", "Name", "NodeUrl", "Weight", "Private", "RegTimestamp", "ExpireTimestamp" }, null, null, null, null)})
           }));
     }
     #endregion
@@ -191,9 +192,11 @@ namespace Collplex.Models.Node {
 
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         public NodeService(NodeService other) : this() {
+          hash_ = other.hash_;
           key_ = other.key_;
           name_ = other.name_;
           nodeUrl_ = other.nodeUrl_;
+          weight_ = other.weight_;
           private_ = other.private_;
           regTimestamp_ = other.regTimestamp_;
           expireTimestamp_ = other.expireTimestamp_;
@@ -205,8 +208,22 @@ namespace Collplex.Models.Node {
           return new NodeService(this);
         }
 
+        /// <summary>Field number for the "hash" field.</summary>
+        public const int HashFieldNumber = 1;
+        private string hash_ = "";
+        /// <summary>
+        /// 子节点业务唯一 Hash (在负载均衡有多个相同 key 的情况下标识唯一性） 
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        public string Hash {
+          get { return hash_; }
+          set {
+            hash_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+          }
+        }
+
         /// <summary>Field number for the "key" field.</summary>
-        public const int KeyFieldNumber = 1;
+        public const int KeyFieldNumber = 2;
         private string key_ = "";
         /// <summary>
         /// 子节点业务标识 Key 
@@ -220,7 +237,7 @@ namespace Collplex.Models.Node {
         }
 
         /// <summary>Field number for the "name" field.</summary>
-        public const int NameFieldNumber = 2;
+        public const int NameFieldNumber = 3;
         private string name_ = "";
         /// <summary>
         /// 子节点友好名称 
@@ -234,7 +251,7 @@ namespace Collplex.Models.Node {
         }
 
         /// <summary>Field number for the "nodeUrl" field.</summary>
-        public const int NodeUrlFieldNumber = 3;
+        public const int NodeUrlFieldNumber = 4;
         private string nodeUrl_ = "";
         /// <summary>
         /// 子节点所对应的该业务的完整URL 
@@ -247,8 +264,22 @@ namespace Collplex.Models.Node {
           }
         }
 
+        /// <summary>Field number for the "weight" field.</summary>
+        public const int WeightFieldNumber = 5;
+        private int weight_;
+        /// <summary>
+        /// 子节点负载均衡权重 
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        public int Weight {
+          get { return weight_; }
+          set {
+            weight_ = value;
+          }
+        }
+
         /// <summary>Field number for the "private" field.</summary>
-        public const int PrivateFieldNumber = 4;
+        public const int PrivateFieldNumber = 6;
         private bool private_;
         /// <summary>
         /// 子节点的服务是是否只对同主体的其他子节点开放，如果为 False，则子节点的业务外网可达 
@@ -262,7 +293,7 @@ namespace Collplex.Models.Node {
         }
 
         /// <summary>Field number for the "regTimestamp" field.</summary>
-        public const int RegTimestampFieldNumber = 5;
+        public const int RegTimestampFieldNumber = 7;
         private long regTimestamp_;
         /// <summary>
         /// UNIX 时间戳 首次注册的时间 
@@ -276,7 +307,7 @@ namespace Collplex.Models.Node {
         }
 
         /// <summary>Field number for the "expireTimestamp" field.</summary>
-        public const int ExpireTimestampFieldNumber = 6;
+        public const int ExpireTimestampFieldNumber = 8;
         private long expireTimestamp_;
         /// <summary>
         /// UNIX 时间戳 过期时间。如果子节点超过规定的时间(regInterval)没有报告自己存活，即此业务暂时不能使用。 
@@ -302,9 +333,11 @@ namespace Collplex.Models.Node {
           if (ReferenceEquals(other, this)) {
             return true;
           }
+          if (Hash != other.Hash) return false;
           if (Key != other.Key) return false;
           if (Name != other.Name) return false;
           if (NodeUrl != other.NodeUrl) return false;
+          if (Weight != other.Weight) return false;
           if (Private != other.Private) return false;
           if (RegTimestamp != other.RegTimestamp) return false;
           if (ExpireTimestamp != other.ExpireTimestamp) return false;
@@ -314,9 +347,11 @@ namespace Collplex.Models.Node {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         public override int GetHashCode() {
           int hash = 1;
+          if (Hash.Length != 0) hash ^= Hash.GetHashCode();
           if (Key.Length != 0) hash ^= Key.GetHashCode();
           if (Name.Length != 0) hash ^= Name.GetHashCode();
           if (NodeUrl.Length != 0) hash ^= NodeUrl.GetHashCode();
+          if (Weight != 0) hash ^= Weight.GetHashCode();
           if (Private != false) hash ^= Private.GetHashCode();
           if (RegTimestamp != 0L) hash ^= RegTimestamp.GetHashCode();
           if (ExpireTimestamp != 0L) hash ^= ExpireTimestamp.GetHashCode();
@@ -333,28 +368,36 @@ namespace Collplex.Models.Node {
 
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         public void WriteTo(pb::CodedOutputStream output) {
-          if (Key.Length != 0) {
+          if (Hash.Length != 0) {
             output.WriteRawTag(10);
+            output.WriteString(Hash);
+          }
+          if (Key.Length != 0) {
+            output.WriteRawTag(18);
             output.WriteString(Key);
           }
           if (Name.Length != 0) {
-            output.WriteRawTag(18);
+            output.WriteRawTag(26);
             output.WriteString(Name);
           }
           if (NodeUrl.Length != 0) {
-            output.WriteRawTag(26);
+            output.WriteRawTag(34);
             output.WriteString(NodeUrl);
           }
+          if (Weight != 0) {
+            output.WriteRawTag(40);
+            output.WriteInt32(Weight);
+          }
           if (Private != false) {
-            output.WriteRawTag(32);
+            output.WriteRawTag(48);
             output.WriteBool(Private);
           }
           if (RegTimestamp != 0L) {
-            output.WriteRawTag(40);
+            output.WriteRawTag(56);
             output.WriteInt64(RegTimestamp);
           }
           if (ExpireTimestamp != 0L) {
-            output.WriteRawTag(48);
+            output.WriteRawTag(64);
             output.WriteInt64(ExpireTimestamp);
           }
           if (_unknownFields != null) {
@@ -365,6 +408,9 @@ namespace Collplex.Models.Node {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         public int CalculateSize() {
           int size = 0;
+          if (Hash.Length != 0) {
+            size += 1 + pb::CodedOutputStream.ComputeStringSize(Hash);
+          }
           if (Key.Length != 0) {
             size += 1 + pb::CodedOutputStream.ComputeStringSize(Key);
           }
@@ -373,6 +419,9 @@ namespace Collplex.Models.Node {
           }
           if (NodeUrl.Length != 0) {
             size += 1 + pb::CodedOutputStream.ComputeStringSize(NodeUrl);
+          }
+          if (Weight != 0) {
+            size += 1 + pb::CodedOutputStream.ComputeInt32Size(Weight);
           }
           if (Private != false) {
             size += 1 + 1;
@@ -394,6 +443,9 @@ namespace Collplex.Models.Node {
           if (other == null) {
             return;
           }
+          if (other.Hash.Length != 0) {
+            Hash = other.Hash;
+          }
           if (other.Key.Length != 0) {
             Key = other.Key;
           }
@@ -402,6 +454,9 @@ namespace Collplex.Models.Node {
           }
           if (other.NodeUrl.Length != 0) {
             NodeUrl = other.NodeUrl;
+          }
+          if (other.Weight != 0) {
+            Weight = other.Weight;
           }
           if (other.Private != false) {
             Private = other.Private;
@@ -424,26 +479,34 @@ namespace Collplex.Models.Node {
                 _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
                 break;
               case 10: {
-                Key = input.ReadString();
+                Hash = input.ReadString();
                 break;
               }
               case 18: {
-                Name = input.ReadString();
+                Key = input.ReadString();
                 break;
               }
               case 26: {
+                Name = input.ReadString();
+                break;
+              }
+              case 34: {
                 NodeUrl = input.ReadString();
                 break;
               }
-              case 32: {
-                Private = input.ReadBool();
-                break;
-              }
               case 40: {
-                RegTimestamp = input.ReadInt64();
+                Weight = input.ReadInt32();
                 break;
               }
               case 48: {
+                Private = input.ReadBool();
+                break;
+              }
+              case 56: {
+                RegTimestamp = input.ReadInt64();
+                break;
+              }
+              case 64: {
                 ExpireTimestamp = input.ReadInt64();
                 break;
               }

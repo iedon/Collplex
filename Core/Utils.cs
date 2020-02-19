@@ -78,6 +78,15 @@ namespace Collplex.Core
             return Convert.ToBase64String(hashmessage);
         }
 
+        public static string SHA1Hash(string message)
+        {
+            var encoding = new UTF8Encoding();
+            byte[] messageBytes = encoding.GetBytes(message);
+            using var sha1hash = SHA1.Create();
+            byte[] hashmessage = sha1hash.ComputeHash(messageBytes);
+            return Convert.ToBase64String(hashmessage);
+        }
+
         public static byte[] GetRandomBytes(int size)
         {
             byte[] data = new byte[size];

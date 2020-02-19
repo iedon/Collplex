@@ -37,7 +37,7 @@ namespace Collplex
                 {
                     options.KnownProxies.Add(IPAddress.Parse(ip.Value.Trim()));
                 }
-                options.ForwardLimit = Configuration.GetValue<int>("XForwardedForLimit");
+                options.ForwardLimit = Configuration.GetValue<int>("XForwardedForLimit", 1);
                 options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
             });
 
@@ -46,20 +46,23 @@ namespace Collplex
             var redisSettings = dbSettings.GetSection("Redis");
             Constants.Redis = ConnectionMultiplexer.Connect(redisSettings.GetValue<string>("ConfigurationString"));
             Constants.KeyPrefix = redisSettings.GetValue<string>("KeyPrefix");
-            Constants.AcquireLockTimeoutSeconds = redisSettings.GetValue<uint>("AcquireLockTimeoutSeconds");
-            Constants.LockTimeoutSeconds = redisSettings.GetValue<uint>("LockTimeoutSeconds");
+            Constants.AcquireLockTimeoutSeconds = redisSettings.GetValue<uint>("AcquireLockTimeoutSeconds", 5);
+            Constants.LockTimeoutSeconds = redisSettings.GetValue<uint>("LockTimeoutSeconds", 10);
 
             // -- 配置 MongoDB 业务日志数据库
             Constants.MongoDB = new MongoClient(dbSettings.GetSection("MongoDB").GetValue<string>("ConfigurationString"));
 
             // 配置其他信息
-            Constants.NodePacketInboundAntiReplaySeconds = Configuration.GetValue<uint>("NodePacketInboundAntiReplaySeconds");
+            Constants.NodeDefaultWeight = Configuration.GetValue<uint>("NodeDefaultWeight", 1);
+            Constants.SessionContextGCIntervalSeconds = Configuration.GetValue<uint>("SessionContextGCIntervalSeconds", 3600);
+            Constants.WriteSessionContextToRedisIntervalSeconds = Configuration.GetValue<uint>("WriteSessionContextToRedisIntervalSeconds", 0);
+            Constants.NodePacketInboundAntiReplaySeconds = Configuration.GetValue<uint>("NodePacketInboundAntiReplaySeconds", 600);
             Constants.AppName = Assembly.GetEntryAssembly().GetName().Name;
             Constants.AppVersion = Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
             Constants.NodeHttpClientUserAgent = Constants.AppName + "/" + Constants.AppVersion;
-            Constants.LogUserRequest = Configuration.GetValue<bool>("LogUserRequest");
-            Constants.LogUserPayload = Configuration.GetValue<bool>("LogUserPayload");
-            Constants.NodeHttpClientLifeTimeSeconds = Configuration.GetValue<double>("NodeHttpClientLifeTimeSeconds");
+            Constants.LogUserRequest = Configuration.GetValue<bool>("LogUserRequest", false);
+            Constants.LogUserPayload = Configuration.GetValue<bool>("LogUserPayload", false);
+            Constants.NodeHttpClientLifeTimeSeconds = Configuration.GetValue<double>("NodeHttpClientLifeTimeSeconds", 300);
 
             // 注入子节点访问客户端
             services.AddHttpClient<NodeHttpClient>().SetHandlerLifetime(TimeSpan.FromSeconds(Constants.NodeHttpClientLifeTimeSeconds));
@@ -79,6 +82,9 @@ namespace Collplex
                 options.JsonSerializerOptions.PropertyNamingPolicy = Constants.JsonSerializerOptionsGlobal.PropertyNamingPolicy;
                 options.JsonSerializerOptions.DictionaryKeyPolicy = Constants.JsonSerializerOptionsGlobal.DictionaryKeyPolicy;
             });
+
+            // 注入后台计划任务
+            if (Constants.SessionContextGCIntervalSeconds != 0) services.AddHostedService<SessionContextGC>();
         }
 
         public static void Configure(IApplicationBuilder app)

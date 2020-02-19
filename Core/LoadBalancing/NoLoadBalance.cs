@@ -13,8 +13,15 @@ namespace Collplex.Core.LoadBalancing
                                                         ConcurrentDictionary<string, SessionContext> keyContext,
                                                         out SessionContext hitSessionContext)
         {
-            NodeData.Types.NodeService result = services.FirstOrDefault();
-            hitSessionContext = GetSessionContext(keyContext, result.Hash);
+            NodeData.Types.NodeService result = services.Where(s => s.ExpireTimestamp > DateTimeOffset.UtcNow.ToUnixTimeSeconds()).FirstOrDefault();
+            if (result == null)
+            {
+                hitSessionContext = null;
+            }
+            else
+            {
+                hitSessionContext = GetSessionContext(keyContext, result.Hash);
+            }
             return result;
         }
     }

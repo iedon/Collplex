@@ -103,9 +103,6 @@ namespace Collplex.Controllers
                 return PacketHandler.MakeResponse(ResponseCodeType.SVC_NOT_FOUND);
             }
 
-            // 负载均衡上下文结构 <clientId, <key, <hash, 会话信息> > >
-            //                    ^ 客户ID,  ^业务键  ^候选服务的hash
-            // 一个 Key 下可能有多个 nodeUrl 可供使用。使用负载均衡器找到此时应该使用的 nodeUrl。
             var keyContext = LoadBalancer.GetKeyContext(request.ClientId, request.Key);
             Client.Types.LoadBalancerConfiguration.Types.LoadBalanceType loadBalancerType = Client.Types.LoadBalancerConfiguration.Types.LoadBalanceType.NoLoadBalance;
             foreach (var config in client.LoadBalancerConfigurations)
@@ -135,6 +132,7 @@ namespace Collplex.Controllers
                 if (data == null)
                 {
                     if (Constants.LogUserRequest) LogRequest(requestLog, request.ClientId, ResponseCodeType.NODE_RESPONSE_ERROR, requestWatch);
+                    hitSessionContext.IncrementFailedRequests();
                     return PacketHandler.MakeResponse(ResponseCodeType.NODE_RESPONSE_ERROR);
                 }
 
@@ -144,22 +142,19 @@ namespace Collplex.Controllers
             catch (TaskCanceledException)
             {
                 if (Constants.LogUserRequest) LogRequest(requestLog, request.ClientId, ResponseCodeType.NODE_RESPONSE_TIMEDOUT, requestWatch);
+                hitSessionContext.IncrementFailedRequests();
                 return PacketHandler.MakeResponse(ResponseCodeType.NODE_RESPONSE_TIMEDOUT);
             }
             catch
             {
                 if (Constants.LogUserRequest) LogRequest(requestLog, request.ClientId, ResponseCodeType.NODE_NETWORK_EXCEPTION, requestWatch);
+                hitSessionContext.IncrementFailedRequests();
                 return PacketHandler.MakeResponse(ResponseCodeType.NODE_NETWORK_EXCEPTION);
             }
             finally
             {
                 hitSessionContext.DecrementCurrentRequests();
                 hitSessionContext.IncrementFinishedRequests();
-                // 更新活跃时间戳，但这里做了检测，不会每次都更新活跃时间戳。巧妙利用子节点业务注册周期，降低更新频率。
-                if (hitSessionContext.GetActiveTimestamp() + client.RegIntervalSeconds < DateTimeOffset.UtcNow.ToUnixTimeSeconds())
-                {
-                    hitSessionContext.UpdateActiveTimestamp();
-                }
             }
         }
 

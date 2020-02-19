@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Google.Protobuf;
 using Collplex.Models;
 using Collplex.Models.Node;
+using System.Collections.Generic;
 
 namespace Collplex.Core
 {
@@ -16,6 +17,33 @@ namespace Collplex.Core
 
         // 子节点业务数据的键前缀，内部固定值。
         private const string NodePrefix = "node_";
+
+        /* 获得所有客户，返回一个 <string: clientId, Client> 的字典，注意 client 有可能为 null */
+        public static async Task<Dictionary<string, Client>> GetAllClients()
+        {
+            var endpoints = Constants.Redis.GetEndPoints();
+            if (endpoints.Length == 0) return null;
+            var db = Constants.Redis.GetServer(endpoints[0]);
+            var allKeys = db.Keys(pattern: Constants.KeyPrefix + MetaDataPrefix + "*");
+            Dictionary<string, Client> allClients = new Dictionary<string, Client>();
+            foreach (var key in allKeys)
+            {
+                string[] keySplit = key.ToString().Split(MetaDataPrefix);
+                if (keySplit.Length == 0 || keySplit.Length == 1) continue;
+                Client client = await GetClientWithFullKey(key);
+                allClients.Add(keySplit[^1], client);
+            }
+            return allClients;
+        }
+
+        /* 获得客户(使用完整的 Key) */
+        public static async Task<Client> GetClientWithFullKey(string fullKey)
+        {
+            var db = Constants.Redis.GetDatabase();
+            byte[] rawBytes = await db.StringGetAsync(fullKey);
+            if (rawBytes != null) return Client.Parser.ParseFrom(rawBytes);
+            return null;
+        }
 
         /* 获得客户 */
         public static async Task<Client> GetClient(string clientId)

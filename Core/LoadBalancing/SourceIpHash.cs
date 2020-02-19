@@ -14,12 +14,12 @@ namespace Collplex.Core.LoadBalancing
                                                         ConcurrentDictionary<string, SessionContext> keyContext,
                                                         out SessionContext hitSessionContext)
         {
-            var availableServices = services.Where(s => s.ExpireTimestamp > DateTimeOffset.UtcNow.ToUnixTimeSeconds());
+            var availableServices = services.Where(s => s.ExpireTimestamp > DateTimeOffset.UtcNow.ToUnixTimeSeconds()).Select(s => s);
             var count = availableServices.Count();
-            NodeData.Types.NodeService result;
+            NodeData.Types.NodeService result = null;
             if (count == 0)
             {
-                result = services.FirstOrDefault();
+                hitSessionContext = null;
             }
             else
             {
@@ -27,8 +27,8 @@ namespace Collplex.Core.LoadBalancing
                 int hashCode = Math.Abs(sourceIpAddressHashCode);
                 int index = hashCode % length;
                 result = availableServices.ElementAt(index);
+                hitSessionContext = GetSessionContext(keyContext, result.Hash);
             }
-            hitSessionContext = GetSessionContext(keyContext, result.Hash);
             return result;
         }
     }

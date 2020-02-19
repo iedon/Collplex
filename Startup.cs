@@ -32,7 +32,7 @@ namespace Collplex
             // 读取并注入允许的反向代理主机配置
             services.Configure<ForwardedHeadersOptions>(options =>
             {
-                var allowedProxyIPs = Configuration.GetSection("AllowedProxyIPs").AsEnumerable().Where(ip => ip.Value != null);
+                var allowedProxyIPs = Configuration.GetSection("AllowedProxyIPs").AsEnumerable().Where(ip => ip.Value != null).Select(ip => ip);
                 foreach (var ip in allowedProxyIPs)
                 {
                     options.KnownProxies.Add(IPAddress.Parse(ip.Value.Trim()));

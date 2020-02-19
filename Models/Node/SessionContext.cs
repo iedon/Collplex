@@ -12,25 +12,26 @@ namespace Collplex.Models.Node
         private int currentLoadBalanceWeight;
         private int currentRequests;
         private long finishedRequests;
-        private long activeTimestamp;
+        private long failedRequests;
 
         public SessionContext()
         {
-            currentLoadBalanceWeight = (int)Constants.NodeDefaultWeight;
+            currentLoadBalanceWeight = 0;
             currentRequests = 0;
             finishedRequests = 0;
-            activeTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            failedRequests = 0;
         }
 
         public int GetCurrentRequests() => currentRequests;
         public long GetFinishedRequests() => finishedRequests;
-        public long GetActiveTimestamp() => activeTimestamp;
+        public long GetFailedRequests() => failedRequests;
 
         public int IncrementCurrentRequests() => Interlocked.Increment(ref currentRequests);
         public int DecrementCurrentRequests() => Interlocked.Decrement(ref currentRequests);
         public long IncrementFinishedRequests() => Interlocked.Increment(ref finishedRequests);
         public long DecrementFinishedRequests() => Interlocked.Decrement(ref finishedRequests);
-        public long UpdateActiveTimestamp() => Interlocked.Exchange(ref activeTimestamp, DateTimeOffset.UtcNow.ToUnixTimeSeconds() + Cons);
+        public long IncrementFailedRequests() => Interlocked.Increment(ref failedRequests);
+        public long DecrementFailedRequests() => Interlocked.Decrement(ref failedRequests);
 
         public int GetCurrentLoadBalanceWeight() => currentLoadBalanceWeight;
         public int SetCurrentLoadBalanceWeight(int weight) => Interlocked.Exchange(ref currentLoadBalanceWeight, weight);

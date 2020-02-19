@@ -13,9 +13,9 @@ namespace Collplex.Core.LoadBalancing
                                                                   ConcurrentDictionary<string, SessionContext> keyContext,
                                                                   out SessionContext hitSessionContext)
         {
-            NodeData.Types.NodeService result = services.FirstOrDefault();
-            hitSessionContext = GetSessionContext(keyContext, result.Hash);
-            var availableServices = services.Where(s => s.ExpireTimestamp > DateTimeOffset.UtcNow.ToUnixTimeSeconds());
+            NodeData.Types.NodeService result = null;
+            hitSessionContext = null;
+            var availableServices = services.Where(s => s.ExpireTimestamp > DateTimeOffset.UtcNow.ToUnixTimeSeconds()).Select(s => s);
             var count = availableServices.Count();
             if (count != 0)
             {

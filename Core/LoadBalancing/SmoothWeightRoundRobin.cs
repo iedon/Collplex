@@ -13,12 +13,19 @@ namespace Collplex.Core.LoadBalancing
                                                                   ConcurrentDictionary<string, SessionContext> keyContext,
                                                                   out SessionContext hitSessionContext)
         {
-            NodeData.Types.NodeService result = services.FirstOrDefault();
-            hitSessionContext = GetSessionContext(keyContext, result.Hash);
-            var availableServices = services.Where(s => s.ExpireTimestamp > DateTimeOffset.UtcNow.ToUnixTimeSeconds());
+            NodeData.Types.NodeService result = null;
+            hitSessionContext = null;
+            var availableServices = services.Where(s => s.ExpireTimestamp > DateTimeOffset.UtcNow.ToUnixTimeSeconds()).Select(s => s);
             var count = availableServices.Count();
             if (count != 0)
             {
+                // 调整权重
+                foreach (NodeData.Types.NodeService service in availableServices)
+                {
+                    SessionContext currentContext = GetSessionContext(keyContext, service.Hash);
+                    currentContext.SetCurrentLoadBalanceWeight(currentContext.GetCurrentLoadBalanceWeight() + service.Weight);
+                }
+
                 int index = 0;
                 // 原始权重之和
                 int weightSum = 0;
@@ -31,7 +38,7 @@ namespace Collplex.Core.LoadBalancing
                     weightSum += service.Weight;
                     SessionContext currentContext = GetSessionContext(keyContext, service.Hash);
                     int currentWeight = currentContext.GetCurrentLoadBalanceWeight();
-                    if (currentWeight > maxCurrentWeight)
+                    if (currentWeight >= maxCurrentWeight)
                     {
                         hitSessionContext = currentContext;
                         maxCurrentWeightIndex = index;
@@ -40,19 +47,11 @@ namespace Collplex.Core.LoadBalancing
                     index++;
                 }
 
-                if (maxCurrentWeight != 0)
-                {
-                    result = availableServices.ElementAt(maxCurrentWeightIndex);
-
-                    // 重新调整权重
-                    hitSessionContext.SetCurrentLoadBalanceWeight(maxCurrentWeight - weightSum);
-                    foreach (NodeData.Types.NodeService service in availableServices)
-                    {
-                        SessionContext currentContext = GetSessionContext(keyContext, service.Hash);
-                        currentContext.SetCurrentLoadBalanceWeight(currentContext.GetCurrentLoadBalanceWeight() + service.Weight);
-                    }
-                }
+                // 对选中的后端再次设置权重
+                hitSessionContext.SetCurrentLoadBalanceWeight(maxCurrentWeight - weightSum);
+                result = availableServices.ElementAt(maxCurrentWeightIndex);
             }
+
             return result;
         }
     }

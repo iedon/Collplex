@@ -6,7 +6,7 @@ using Collplex.Models;
 
 namespace Collplex.Models.Node
 {
-    public class InboundRegisterRequest
+    public class RPCRegisterServicePayload
     {
         public class ServiceRegisterElement
         {

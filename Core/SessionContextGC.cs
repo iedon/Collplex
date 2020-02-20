@@ -1,18 +1,24 @@
-﻿using Collplex.Core.LoadBalancing;
-using Collplex.Models.Node;
-using Microsoft.Extensions.Hosting;
-using System;
-using System.Collections.Concurrent;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Collplex.Core.LoadBalancing;
 
 namespace Collplex.Core
 {
     public class SessionContextGC : IHostedService, IDisposable
     {
         private Timer timer;
+        private readonly ILogger<SessionContextGC> logger;
+
+        public SessionContextGC(ILogger<SessionContextGC> logger)
+        {
+            this.logger = logger;
+        }
+
         public Task StartAsync(CancellationToken stoppingToken)
         {
             timer = new Timer(async s => await DoSessionContextGCAsync(s), null, TimeSpan.Zero, TimeSpan.FromSeconds(Constants.SessionContextGCIntervalSeconds));
@@ -25,92 +31,98 @@ namespace Collplex.Core
         // 一个 Key 下可能有多个 nodeUrl 可供使用。使用负载均衡器找到此时应该使用的 nodeUrl。
         private async Task DoSessionContextGCAsync(object state)
         {
-            var allClients = await NodeHelper.GetAllClients();
-
-            // 第一步
-            // 从会话上下文中找到并删除当前已经不再可用的客户(比如客户被管理端删除了)
-            var activeClients = new List<string>();
-            var clientsToRemove = LoadBalancer.SessionContexts.Where(c =>
+            try
             {
-                bool found = false;
-                foreach (var registeredClient in allClients)
-                {
-                    if (c.Key == registeredClient.Key)
-                    {
-                        found = true;
-                        activeClients.Add(registeredClient.Key);
-                    }
-                }
-                return !found;
-            }).Select(c => c.Key);
-            foreach (var clientToRemove in clientsToRemove) LoadBalancer.SessionContexts.TryRemove(clientToRemove, out _);
+                var allClients = await NodeHelper.GetAllClients();
 
-            // 从会话上下文中找到并删除在可用客户中不再存在的服务
-            foreach (var activeClient in activeClients)
-            {
-                var registeredServices = LoadBalancer.SessionContexts.Where(l => l.Key == activeClient).FirstOrDefault().Value.Select(k => k.Key);
-                foreach (var registeredService in registeredServices)
+                // 第一步
+                // 从会话上下文中找到并删除当前已经不再可用的客户(比如客户被管理端删除了)
+                var activeClients = new List<string>();
+                var clientsToRemove = LoadBalancer.SessionContexts.Where(c =>
                 {
                     bool found = false;
-                    var nodeData = await NodeHelper.GetNodeData(activeClient);
-                    if (nodeData != null)
+                    foreach (var registeredClient in allClients)
                     {
-                        foreach (var service in nodeData.Services)
+                        if (c.Key == registeredClient.Key)
                         {
-                            if (service.Key == registeredService) found = true;
+                            found = true;
+                            activeClients.Add(registeredClient.Key);
                         }
                     }
-                    if (!found)
-                    {
-                        LoadBalancer.SessionContexts.Where(l => l.Key == activeClient).FirstOrDefault().Value.TryRemove(registeredService, out _);
-                    }
+                    return !found;
+                }).Select(c => c.Key);
+                foreach (var clientToRemove in clientsToRemove) LoadBalancer.SessionContexts.TryRemove(clientToRemove, out _);
 
-                }
-            }
-
-            // 第二步
-            // 删除所有客户中的所有业务中的已过期的会话
-            var nullClientIds = allClients.Where(c => c.Value == null).Select(c => c.Key);
-            foreach (var nullClientId in nullClientIds) LoadBalancer.SessionContexts.TryRemove(nullClientId, out _);
-
-            var validClientIds = allClients.Where(c => c.Value != null).Select(c => c.Key);
-            foreach (var validClientId in validClientIds)
-            {
-                var nodeData = await NodeHelper.GetNodeData(validClientId);
-                if (nodeData != null)
+                // 从会话上下文中找到并删除在可用客户中不再存在的服务
+                foreach (var activeClient in activeClients)
                 {
-                    var expiredHashes = nodeData.Services.Where(s => s.ExpireTimestamp < DateTimeOffset.UtcNow.ToUnixTimeSeconds()).Select(s => s.Hash);
-                    foreach (var expiredHash in expiredHashes)
+                    var registeredServices = LoadBalancer.SessionContexts.Where(l => l.Key == activeClient).FirstOrDefault().Value.Select(k => k.Key);
+                    foreach (var registeredService in registeredServices)
                     {
-                        var client = LoadBalancer.SessionContexts.Where(c => c.Key == validClientId).FirstOrDefault();
-                        if (client.Key == null || client.Value == null) return;
-
-                        string keyToGC = null;
-                        string hashToGC = null;
-                        foreach (var key in client.Value)
+                        bool found = false;
+                        var nodeData = await NodeHelper.GetNodeData(activeClient);
+                        if (nodeData != null)
                         {
-                            foreach (var hash in key.Value)
+                            foreach (var service in nodeData.Services)
                             {
-                                if (hash.Key == expiredHash)
+                                if (service.Key == registeredService) found = true;
+                            }
+                        }
+                        if (!found)
+                        {
+                            LoadBalancer.SessionContexts.Where(l => l.Key == activeClient).FirstOrDefault().Value.TryRemove(registeredService, out _);
+                        }
+
+                    }
+                }
+
+                // 第二步
+                // 删除所有客户中的所有业务中的已过期的会话
+                var nullClientIds = allClients.Where(c => c.Value == null).Select(c => c.Key);
+                foreach (var nullClientId in nullClientIds) LoadBalancer.SessionContexts.TryRemove(nullClientId, out _);
+
+                var validClientIds = allClients.Where(c => c.Value != null).Select(c => c.Key);
+                foreach (var validClientId in validClientIds)
+                {
+                    var nodeData = await NodeHelper.GetNodeData(validClientId);
+                    if (nodeData != null)
+                    {
+                        var expiredHashes = nodeData.Services.Where(s => s.ExpireTimestamp < DateTimeOffset.UtcNow.ToUnixTimeSeconds()).Select(s => s.Hash);
+                        foreach (var expiredHash in expiredHashes)
+                        {
+                            var client = LoadBalancer.SessionContexts.Where(c => c.Key == validClientId).FirstOrDefault();
+                            if (client.Key == null || client.Value == null) return;
+
+                            string keyToGC = null;
+                            string hashToGC = null;
+                            foreach (var key in client.Value)
+                            {
+                                foreach (var hash in key.Value)
                                 {
-                                    keyToGC = key.Key;
-                                    hashToGC = expiredHash;
+                                    if (hash.Key == expiredHash)
+                                    {
+                                        keyToGC = key.Key;
+                                        hashToGC = expiredHash;
+                                    }
+                                }
+                            }
+                            if (keyToGC != null && hashToGC != null)
+                            {
+                                var key = client.Value.Where(k => k.Key == keyToGC).FirstOrDefault();
+                                key.Value.TryRemove(hashToGC, out _);
+                                if (key.Value.Count == 0)
+                                {
+                                    client.Value.TryRemove(keyToGC, out _);
                                 }
                             }
                         }
-                        if (keyToGC != null && hashToGC != null)
-                        {
-                            var key = client.Value.Where(k => k.Key == keyToGC).FirstOrDefault();
-                            key.Value.TryRemove(hashToGC, out _);
-                            if (key.Value.Count == 0)
-                            {
-                                client.Value.TryRemove(keyToGC, out _);
-                            }
-                        }
                     }
                 }
             }
-
+            catch (Exception exception)
+            {
+                logger.LogError("Error recycling SessionContext: " + exception.Message);
+            }
         }
 
         public Task StopAsync(CancellationToken stoppingToken)

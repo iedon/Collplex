@@ -5,11 +5,12 @@ using System.Threading.Tasks;
 
 namespace Collplex.Models.Node
 {
-    public enum NodeActionEnum
+    public enum RPCActionEnum
     {
         REGISTER,
         LIST,
         GET,
+        CALL,
         DESTROY
     }
 }

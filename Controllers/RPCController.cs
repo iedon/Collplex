@@ -5,26 +5,25 @@ using Microsoft.AspNetCore.Mvc;
 using Collplex.Core;
 using Collplex.Models;
 using Collplex.Models.Node;
-using System.Threading;
+using Collplex.Core.LoadBalancing;
 
 namespace Collplex.Controllers
 {
-    public class NodeController : AppBaseController
+    public class RPCController : AppBaseController
     {
-        public NodeController() {}
+        public RPCController() {}
 
-        [Route("/node")]
-        public ResponsePacket RegisterService()
-            => PacketHandler.MakeResponse(ResponseCodeType.METHOD_NOT_ALLOWED);
+        [Route("/rpc")]
+        public ResponsePacket RegisterService() => PacketHandler.MakeResponse(ResponseCodeType.METHOD_NOT_ALLOWED);
 
         /*
          * 子节请求互入口
          */
-        [Route("/node")]
+        [Route("/rpc")]
         [HttpPost]
-        public async Task<ResponsePacket> NodeMain([FromBody] NodePacketInbound request)
+        public async Task<ResponsePacket> RPCMain([FromBody] RPCRequest request)
         {
-            if (!PacketHandler.ValidateNodePacketInbound(request))
+            if (!PacketHandler.ValidateRPCRequest(request))
                 return PacketHandler.MakeResponse(ResponseCodeType.BAD_REQUEST);
 
             request.ClientId = request.ClientId.ToLower();
@@ -32,18 +31,18 @@ namespace Collplex.Controllers
             if (client == null)
                 return PacketHandler.MakeResponse(ResponseCodeType.NODE_INVALID_CLIENT_ID);
 
-            string jsonPayload = PacketHandler.DecryptNodePacketInbound(request, client.ClientSecret);
+            string jsonPayload = PacketHandler.GetRPCPayload(request, client.ClientSecret);
             if (jsonPayload == null)
                 return PacketHandler.MakeResponse(ResponseCodeType.BAD_REQUEST);
 
-            NodeActionEnum action = Enum.Parse<NodeActionEnum>(request.Action.ToUpper());
+            RPCActionEnum action = Enum.Parse<RPCActionEnum>(request.Action.ToUpper());
             switch (action) {
-                case NodeActionEnum.REGISTER:
+                case RPCActionEnum.REGISTER:
                 {
-                    InboundRegisterRequest payload;
+                    RPCRegisterServicePayload payload;
                     try
                     {
-                        payload = Utils.JsonDeserialize<InboundRegisterRequest>(jsonPayload);
+                        payload = Utils.JsonDeserialize<RPCRegisterServicePayload>(jsonPayload);
                     }
                     catch
                     {
@@ -51,27 +50,40 @@ namespace Collplex.Controllers
                     }
                     return await RegisterService(request.ClientId, client, payload);
                 }
-                case NodeActionEnum.LIST:
-                    return await ListServices(request.ClientId, client.ClientSecret, request.Iv);
-                case NodeActionEnum.GET:
+                case RPCActionEnum.LIST:
+                    return await ListServices(request.ClientId);
+                case RPCActionEnum.GET:
                 {
-                    InboundGetRequest payload;
+                    RPCGetServicePayload payload;
                     try
                     {
-                        payload = Utils.JsonDeserialize<InboundGetRequest>(jsonPayload);
+                        payload = Utils.JsonDeserialize<RPCGetServicePayload>(jsonPayload);
                     }
                     catch
                     {
                         return PacketHandler.MakeResponse(ResponseCodeType.INVALID_BODY);
                     }
-                    return await GetService(request.ClientId, client.ClientSecret, request.Iv, payload);
+                    return await GetService(request.ClientId, payload);
                 }
-                case NodeActionEnum.DESTROY:
+                case RPCActionEnum.CALL:
                 {
-                    InboundDestroyRequest payload;
+                    RPCCallServicePayload payload;
                     try
                     {
-                        payload = Utils.JsonDeserialize<InboundDestroyRequest>(jsonPayload);
+                        payload = Utils.JsonDeserialize<RPCCallServicePayload>(jsonPayload);
+                    }
+                    catch
+                    {
+                        return PacketHandler.MakeResponse(ResponseCodeType.INVALID_BODY);
+                    }
+                    return await CallService(request.ClientId, payload);
+                }
+                case RPCActionEnum.DESTROY:
+                {
+                    RPCDestroyServicePayload payload;
+                    try
+                    {
+                        payload = Utils.JsonDeserialize<RPCDestroyServicePayload>(jsonPayload);
                     }
                     catch
                     {
@@ -84,19 +96,13 @@ namespace Collplex.Controllers
         }
 
 
-        /*  加密接口
-         *  [使用用户的 iv 加密返回]
+        /*
          * 子节点业务注册与续命
          */
-        private async Task<ResponsePacket> RegisterService(string clientId, Client client, InboundRegisterRequest data)
+        private async Task<ResponsePacket> RegisterService(string clientId, Client client, RPCRegisterServicePayload data)
         {
             if (data == null || data.Services == null)
                 return PacketHandler.MakeResponse(ResponseCodeType.INVALID_BODY);
-
-            // 锁定节点，可以有效避免并发注册的问题
-            string nodeLock = await NodeHelper.LockNode(clientId);
-            if (string.IsNullOrEmpty(nodeLock))
-                return PacketHandler.MakeResponse(ResponseCodeType.NODE_LOCK_TIMEOUT);
 
             // 既然对 NodeData 实现了 Redis 读写锁，为啥还要在这里对请求做加锁？
             // 因为这是一个陷阱，NodeData 读是共享的，虽然写入可以线程安全，但是在高并发下多个注册请求会导致A写入的数据被B覆盖。
@@ -104,6 +110,11 @@ namespace Collplex.Controllers
             // 因此在网关被 Web 服务器负载均衡情况下，子节点中心网关的 URL 不应该为负载均衡的 URL，需要设置为一个固定的值(或 Stick 具体某一个)
             using (await Constants.NodeEditLock.EnterAsync())
             {
+                // 锁定 Redis 节点，避免负载均衡下其他网关并发注册的问题
+                string nodeLock = await NodeHelper.LockNode(clientId);
+                if (string.IsNullOrEmpty(nodeLock))
+                    return PacketHandler.MakeResponse(ResponseCodeType.NODE_LOCK_TIMEOUT);
+
                 try
                 {
                     NodeData nodeData = await NodeHelper.GetNodeData(clientId);
@@ -165,21 +176,20 @@ namespace Collplex.Controllers
 
 
         /*
-         *  [使用用户的 iv 加密返回]
          *  子节点销毁业务
          */
-        private async Task<ResponsePacket> DestroyService(string clientId, InboundDestroyRequest data)
+        private async Task<ResponsePacket> DestroyService(string clientId, RPCDestroyServicePayload data)
         {
             if (data == null || data.Services == null)
                 return PacketHandler.MakeResponse(ResponseCodeType.INVALID_BODY);
 
-            // 锁定节点，可以有效避免并发注册的问题
-            string nodeLock = await NodeHelper.LockNode(clientId);
-            if (string.IsNullOrEmpty(nodeLock))
-                return PacketHandler.MakeResponse(ResponseCodeType.NODE_LOCK_TIMEOUT);
-
             using (await Constants.NodeEditLock.EnterAsync())
             {
+                // 锁定 Redis 节点，避免负载均衡下其他网关并发注册的问题
+                string nodeLock = await NodeHelper.LockNode(clientId);
+                if (string.IsNullOrEmpty(nodeLock))
+                    return PacketHandler.MakeResponse(ResponseCodeType.NODE_LOCK_TIMEOUT);
+
                 try
                 {
                     NodeData nodeData = await NodeHelper.GetNodeData(clientId);
@@ -217,31 +227,76 @@ namespace Collplex.Controllers
         }
 
 
-        /*  加密接口
-         *  [使用用户的 iv 加密返回]
+        /*
          *  子节点获取当前所注册的业务信息
          */
-        private async Task<ResponsePacket> ListServices(string clientId, string secret, string iv)
+        private async Task<ResponsePacket> ListServices(string clientId)
         {
             NodeData nodeData = await NodeHelper.GetNodeData(clientId);
             if (nodeData == null) nodeData = new NodeData(); // 没有找到节点，就建一个空的临时对象，用于序列化空服务响应
-            return PacketHandler.MakeResponse(ResponseCodeType.OK, PacketHandler.MakeNodeEncryptedPayload(nodeData.Services, secret, iv));
+            return PacketHandler.MakeResponse(ResponseCodeType.OK, Utils.JsonSerialize(nodeData.Services));
         }
 
 
-        /*  加密接口
-         *  [使用用户的 iv 加密返回]
+        /*
          *  子节点获取某业务的信息
          */
-        private async Task<ResponsePacket> GetService(string clientId, string secret, string iv, InboundGetRequest data)
+        private async Task<ResponsePacket> GetService(string clientId, RPCGetServicePayload data)
         {
             NodeData nodeData = await NodeHelper.GetNodeData(clientId);
+            if (nodeData == null)
+            {
+                return PacketHandler.MakeResponse(ResponseCodeType.NODE_OPERATION_FAILED);
+            }
             var relatedServices = new List<NodeData.Types.NodeService>();
             foreach (var currentService in nodeData.Services)
             {
                 if (currentService.Key == data.Key) relatedServices.Add(currentService);
             }
-            return PacketHandler.MakeResponse(ResponseCodeType.OK, PacketHandler.MakeNodeEncryptedPayload(nodeData.Services, secret, iv));
+            return PacketHandler.MakeResponse(ResponseCodeType.OK, Utils.JsonSerialize(relatedServices));
+        }
+
+
+        /*
+         *  子节点调用同节点下其他业务，返回经过负载均衡器选择后的 URL
+         */
+        private async Task<ResponsePacket> CallService(string clientId, RPCCallServicePayload data)
+        {
+            Client client = await NodeHelper.GetClient(clientId);
+            if (client == null)
+            {
+                return PacketHandler.MakeResponse(ResponseCodeType.NODE_OPERATION_FAILED);
+            }
+
+            NodeData nodeData = await NodeHelper.GetNodeData(clientId);
+            if (nodeData == null)
+            {
+                return PacketHandler.MakeResponse(ResponseCodeType.NODE_OPERATION_FAILED);
+            }
+
+            var relatedServices = new List<NodeData.Types.NodeService>();
+            foreach (var currentService in nodeData.Services)
+            {
+                if (currentService.Key == data.Key) relatedServices.Add(currentService);
+            }
+
+            var keyContext = LoadBalancer.GetKeyContext(clientId, data.Key);
+            Client.Types.LoadBalancerConfiguration.Types.LoadBalanceType loadBalancerType = Client.Types.LoadBalancerConfiguration.Types.LoadBalanceType.NoLoadBalance;
+            foreach (var config in client.LoadBalancerConfigurations)
+            {
+                if (config.Key == data.Key)
+                {
+                    loadBalancerType = config.Type;
+                    break;
+                }
+            }
+            NodeData.Types.NodeService serviceToUse = LoadBalancer.Lease(loadBalancerType, relatedServices, keyContext, HttpContext.Connection.RemoteIpAddress.GetHashCode(), out _);
+            if (serviceToUse == null) // 负载均衡器返回无可用业务备选 (业务已过期)
+            {
+                return PacketHandler.MakeResponse(ResponseCodeType.SVC_UNAVAILABLE);
+            }
+
+            return PacketHandler.MakeResponse(ResponseCodeType.OK, serviceToUse.NodeUrl);
         }
     }
 }

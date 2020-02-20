@@ -6,16 +6,13 @@ using System.Threading.Tasks;
 namespace Collplex.Models.Node
 {
     /* 此类是本中心节点向子节点发送的请求 */
-    public class NodePacketOutbound
+    public class NodeRequest
     {
         // 中心节点请求签名
         public string Signature { get; set; }
 
         // 中心节点响应时间戳
         public long Timestamp { get; set; }
-
-        // 中心节点加密初始化向量
-        public string Iv { get; set; }
 
         // 请求数据
         public string Data { get; set; }

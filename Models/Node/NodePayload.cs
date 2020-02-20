@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace Collplex.Models.Node
 {
-    public class OutboundRequest
+    public class NodePayload
     {
         public string RemoteIp { get; set; }
         public string UserAgent { get; set; }

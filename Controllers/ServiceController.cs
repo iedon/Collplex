@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Collplex.Core;
 using Collplex.Models;
 using Collplex.Models.Node;
-using Microsoft.Extensions.Logging;
-using System.Diagnostics;
-using System.Collections.Concurrent;
 using Collplex.Core.LoadBalancing;
 
 namespace Collplex.Controllers
@@ -26,18 +25,18 @@ namespace Collplex.Controllers
             this.mongoRepository = mongoRepository;
         }
 
-        [Route("/service")]
+        [Route("~/")]
         public ResponsePacket ServiceMain()
             => PacketHandler.MakeResponse(ResponseCodeType.METHOD_NOT_ALLOWED);
 
         /*
          * 业务入口
          */
-        [Route("/service")]
+        [Route("~/")]
         [HttpPost]
         public async Task<ResponsePacket> ServiceMain([FromBody] ServiceRequest request)
         {
-            if (!PacketHandler.ValidateRequest(request))
+            if (!PacketHandler.ValidateServiceRequest(request))
             {
                 // Bad Request 不记录日志，以防垃圾信息堆积。
                 return PacketHandler.MakeResponse(ResponseCodeType.BAD_REQUEST);
@@ -122,13 +121,13 @@ namespace Collplex.Controllers
             hitSessionContext.IncrementCurrentRequests();
             try
             {
-                OutboundRequest outboundRequest = new OutboundRequest()
+                NodePayload outboundRequest = new NodePayload()
                 {
                     RemoteIp = HttpContext.Connection.RemoteIpAddress.ToString(),
                     UserAgent = userAgentSingle,
                     Payload = request.Data
                 };
-                var data = await httpClient.RequestNodeService(serviceToUse.NodeUrl, outboundRequest, client.Timeout, request.ClientId, client.ClientSecret);
+                var data = await httpClient.RequestNodeService(new Uri(serviceToUse.NodeUrl), outboundRequest, client.Timeout, request.ClientId, client.ClientSecret);
                 if (data == null)
                 {
                     if (Constants.LogUserRequest) LogRequest(requestLog, request.ClientId, ResponseCodeType.NODE_RESPONSE_ERROR, requestWatch);

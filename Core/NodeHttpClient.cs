@@ -16,15 +16,15 @@ namespace Collplex.Core
 
         public NodeHttpClient(HttpClient client)
         {
-            client.DefaultRequestHeaders.Add("User-Agent", Constants.NodeHttpClientUserAgent);
+            client.DefaultRequestHeaders.Add("user-agent", Constants.NodeHttpClientUserAgent);
             Client = client;
         }
 
         /* 如果任务超时，会由 PostAsync Task 发出 TaskCanceledException */
-        public async Task<object> RequestNodeService(string nodeServiceUrl, OutboundRequest outboundRequest, int timeout, string clientId, string clientSecret)
+        public async Task<object> RequestNodeService(Uri nodeServiceUrl, NodePayload outboundRequest, int timeout, string clientId, string clientSecret)
         {
             Client.Timeout = TimeSpan.FromSeconds(timeout);
-            if (!PacketHandler.MakeNodePacketOutbound(outboundRequest, clientId, clientSecret, out NodePacketOutbound packetOutbound, out string iv))
+            if (!PacketHandler.MakeNodeRequest(outboundRequest, clientId, clientSecret, out NodeRequest packetOutbound))
                 return null;
 
             using var content = new StringContent(Utils.JsonSerialize(packetOutbound), Encoding.UTF8, Constants.JsonContentType);
@@ -36,14 +36,12 @@ namespace Collplex.Core
             try
             {
                 using Stream httpBody = await response.Content.ReadAsStreamAsync();
+
                 // 这里使用流解析响应数据包，提高性能
                 ResponsePacket responsePacket = await Utils.JsonDeserializeAsync<ResponsePacket>(httpBody);
-                if (responsePacket.Code != ResponseCodeType.OK)
-                {
-                    return null;
-                }
-                string decryptedData = Utils.CommonDecrypt(responsePacket.Data.ToString(), clientSecret, iv);
-                return Utils.JsonDeserialize<object>(decryptedData);
+                if (responsePacket.Code != ResponseCodeType.OK) return null;
+   
+                return Utils.JsonDeserialize<object>(responsePacket.Data.ToString());
             }
             catch
             {

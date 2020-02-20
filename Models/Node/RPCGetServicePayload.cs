@@ -6,7 +6,7 @@ using Collplex.Models;
 
 namespace Collplex.Models.Node
 {
-    public class InboundGetRequest
+    public class RPCGetServicePayload
     {
         // 子节点业务 Key
         public string Key { get; set; }

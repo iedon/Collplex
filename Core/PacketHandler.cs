@@ -40,21 +40,18 @@ namespace Collplex.Core
             Data = data ?? "",
         };
 
-        public static bool MakeNodePacketOutbound(object serializable, string clientId, string clientSecret, out NodePacketOutbound packetOutbound, out string iv)
+        public static bool MakeNodeRequest(object serializable, string clientId, string clientSecret, out NodeRequest packetOutbound)
         {
             string rawData = Utils.JsonSerialize(serializable);
-            iv = Convert.ToBase64String(Utils.GetRandomBytes(16)) ; // 生成随机初始化向量
             long timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds(); // 生成时间戳
             try
             {
-                string encryptedData = Utils.CommonEncrypt(rawData, clientSecret, iv);
-                string signature = MakeSignature(encryptedData, clientId, clientSecret, timestamp);
-                packetOutbound = new NodePacketOutbound
+                string signature = MakeSignature(rawData, clientId, clientSecret, timestamp);
+                packetOutbound = new NodeRequest
                 {
                     Signature = signature,
                     Timestamp = timestamp,
-                    Iv = iv,
-                    Data = encryptedData
+                    Data = rawData
                 };
             }
             catch
@@ -65,25 +62,24 @@ namespace Collplex.Core
             return true;
         }
 
-        public static bool ValidateRequest(ServiceRequest request)
+        public static bool ValidateServiceRequest(ServiceRequest request)
         {
             if (request == null || string.IsNullOrEmpty(request.ClientId) || string.IsNullOrEmpty(request.Key))
                 return false;
             return true;
         }
 
-        public static bool ValidateNodePacketInbound(NodePacketInbound request)
+        public static bool ValidateRPCRequest(RPCRequest request)
         {
             if (request == null
                 || string.IsNullOrEmpty(request.ClientId)
                 || string.IsNullOrEmpty(request.Signature)
                 || request.Timestamp <= 0
                 || string.IsNullOrEmpty(request.Action)
-                || string.IsNullOrEmpty(request.Iv)
                 || string.IsNullOrEmpty(request.Data))
                 return false;
 
-            // 防止重放攻击，如果用户 Timestamp 造假，则会在后面 DecryptNodePacketInbound() 签名验证环节被发现和拦截。
+            // 防止重放攻击，如果用户 Timestamp 造假，则会在后面 GetRPCPayload() 签名验证环节被发现和拦截。
             var currentTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             if (request.Timestamp < currentTimestamp - Constants.NodePacketInboundAntiReplaySeconds || request.Timestamp > currentTimestamp + Constants.NodePacketInboundAntiReplaySeconds)
             {
@@ -92,30 +88,16 @@ namespace Collplex.Core
             return true;
         }
 
-        public static string MakeSignature(string encryptedData, string clientId, string clientSecret, long timestamp)
-        {
-            /* 加密和签名流程：
-             * 原始数据 -> 用 clientSecret 作密钥 进行 AES-256-CBC 加密 -> Base64 -> 【得到处理后的数据】
-             *          -> 使用 clientId + clientSecret 作密钥 对处理后的数据进行 HmacSHA256 签名 -> 将签名后的 base64 串 + UNIX 时间戳 再次进行 SHA256 哈希
-             *          -> 【得到最终签名(base64)】
-             */
-            string hmacSha256Sign = Utils.HmacSHA256Hash(encryptedData, clientId + clientSecret); // 第一轮：HmacSHA256 签名
-            return Utils.SHA256Hash(hmacSha256Sign + timestamp); // 第二轮：SHA256 哈希
-        }
+        public static string MakeSignature(string data, string clientId, string clientSecret, long timestamp)
+            => Utils.HmacSHA1Hash(data, timestamp.ToString() + clientId + clientSecret);
 
-        public static string DecryptNodePacketInbound(NodePacketInbound request, string clientSecret)
+        public static string GetRPCPayload(RPCRequest request, string clientSecret)
         {
-            /* 加密和签名流程：
-             * 原始数据 -> 用 clientSecret 作密钥 进行 AES-256-CBC 加密 -> Base64 -> 【得到处理后的数据】
-             *          -> 使用 clientId + clientSecret 作密钥 对处理后的数据进行 HmacSHA256 签名 -> 将签名后的 base64 串 + UNIX 时间戳 再次进行 SHA256 哈希
-             *          -> 【得到最终签名(base64)】
-             */
             try
             {
                 string signature = MakeSignature(request.Data, request.ClientId, clientSecret, request.Timestamp);
                 if (signature != request.Signature) return null;
-                string ret = Utils.CommonDecrypt(request.Data, clientSecret, request.Iv);
-                return ret;
+                return request.Data;
             }
             catch
             {
@@ -123,7 +105,5 @@ namespace Collplex.Core
             }
         }
 
-        public static string MakeNodeEncryptedPayload(object serializable, string key, string iv)
-            => Utils.CommonEncrypt(Utils.JsonSerialize(serializable), key, iv);
     }
 }

@@ -6,7 +6,7 @@ using Collplex.Models;
 
 namespace Collplex.Models.Node
 {
-    public class InboundDestroyRequest
+    public class RPCDestroyServicePayload
     {
         public class ServiceDestroyElement {
 

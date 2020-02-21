@@ -3,9 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text.Json;
-using Collplex.Models.Node;
 using MongoDB.Driver;
-using Nito.AsyncEx;
 using StackExchange.Redis;
 
 namespace Collplex.Core
@@ -14,6 +12,7 @@ namespace Collplex.Core
     public static class Constants
     {
         public const string JsonContentType = "application/json";
+        public const string ProtobufContentType = "application/x-protobuf";
         public static JsonSerializerOptions JsonSerializerOptionsGlobal = new JsonSerializerOptions()
         {
             // 不美化输出(即采用压缩输出而不格式化)
@@ -22,8 +21,6 @@ namespace Collplex.Core
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             DictionaryKeyPolicy = JsonNamingPolicy.CamelCase
         };
-
-        public static AsyncMonitor NodeEditLock = new AsyncMonitor();
 
         /* ---------- 以下这些属性都在初始化的时候设置 ---------- */
 

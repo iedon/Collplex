@@ -1,0 +1,37 @@
+﻿syntax = "proto3";
+package Collplex.Models;
+
+/* 响应 */
+message ResponsePacket {
+
+    enum ResponseCodeType {
+        OK = 0;
+        SERVER_EXCEPTION = 1000;
+        NOT_FOUND = 1001;
+        FORBIDDEN = 1002;
+        BAD_GATEWAY = 1003;
+        BAD_REQUEST = 1004;
+        SERVICE_UNAVAILABLE = 1005;
+        METHOD_NOT_ALLOWED = 1006;
+        INVALID_BODY = 1007;
+        NODE_INVALID_CLIENT_ID = 2000;
+        NODE_OPERATION_FAILED = 2001;
+        NODE_REG_LIMIT = 2002;
+        NODE_LOCK_TIMEOUT = 2003;
+        NODE_RESPONSE_ERROR = 2004;
+        NODE_RESPONSE_TIMEDOUT = 2005;
+        NODE_NETWORK_EXCEPTION = 2006;
+        SVC_INVALID_CLIENT_ID = 3000;
+        SVC_NOT_FOUND = 3001;
+        SVC_UNAVAILABLE = 3002;
+    }
+
+    /* 响应状态码 */
+    ResponseCodeType code = 1;
+
+    /* 响应状态码的消息 */
+    string message = 2;
+    
+    /* JSON 数据 */
+    string data = 3;
+}

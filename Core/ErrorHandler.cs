@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Builder;
 using Collplex.Core;
 using Collplex.Models;
-using Microsoft.AspNetCore.Builder;
+using static Collplex.Models.ResponsePacket.Types;
 
 namespace Collplex.Core
 {
@@ -23,16 +23,16 @@ namespace Collplex.Core
         });
 
         // 将 404, 403, 500, 502 等框架抛出的标准 HTTP 错误统一转化为程序自己的格式
-        private static ResponsePacket MakeCommonErrorResponse(int? statusCode)
+        private static object MakeCommonErrorResponse(int? statusCode)
         {
             if (statusCode == null) statusCode = 500;
             switch (statusCode) {
-                default: case 500: return PacketHandler.MakeResponse(ResponseCodeType.SERVER_EXCEPTION);
-                case 415: case 400: return PacketHandler.MakeResponse(ResponseCodeType.BAD_REQUEST);
-                case 403: return PacketHandler.MakeResponse(ResponseCodeType.FORBIDDEN);
-                case 404: return PacketHandler.MakeResponse(ResponseCodeType.NOT_FOUND);
-                case 502: return PacketHandler.MakeResponse(ResponseCodeType.BAD_GATEWAY);
-                case 503: return PacketHandler.MakeResponse(ResponseCodeType.SERVICE_UNAVAILABLE);
+                default: case 500: return PacketHandler.MakeResponse(ResponseCodeType.ServerException);
+                case 415: case 400: return PacketHandler.MakeResponse(ResponseCodeType.BadRequest);
+                case 403: return PacketHandler.MakeResponse(ResponseCodeType.Forbidden);
+                case 404: return PacketHandler.MakeResponse(ResponseCodeType.NotFound);
+                case 502: return PacketHandler.MakeResponse(ResponseCodeType.BadGateway);
+                case 503: return PacketHandler.MakeResponse(ResponseCodeType.ServiceUnavailable);
             }
         }
     }

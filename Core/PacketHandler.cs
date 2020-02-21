@@ -1,57 +1,74 @@
 ﻿using System;
+using System.Collections.Generic;
+using Google.Protobuf;
 using Collplex.Models;
 using Collplex.Models.Node;
+using static Collplex.Models.ResponsePacket.Types;
 
 namespace Collplex.Core
 {
     public static class PacketHandler
     {
         private static string GetMessageByCode(ResponseCodeType code)
-        {
-            return code switch
+            => code switch
             {
-                ResponseCodeType.OK => "ok",
-                ResponseCodeType.SERVER_EXCEPTION => "server error",
-                ResponseCodeType.NOT_FOUND => "not found",
-                ResponseCodeType.FORBIDDEN => "forbidden",
-                ResponseCodeType.BAD_GATEWAY => "bad gateway",
-                ResponseCodeType.BAD_REQUEST => "bad request",
-                ResponseCodeType.SERVICE_UNAVAILABLE => "service unavailable",
-                ResponseCodeType.METHOD_NOT_ALLOWED => "method not allowed",
-                ResponseCodeType.INVALID_BODY => "invalid body",
-                ResponseCodeType.NODE_OPERATION_FAILED => "node: operation failed",
-                ResponseCodeType.NODE_INVALID_CLIENT_ID => "node: invalid clientId",
-                ResponseCodeType.NODE_REG_CUSTOM_SVC_LIMIT => "node: could not register more custom services",
-                ResponseCodeType.NODE_LOCK_TIMEOUT => "node: lock timeout",
-                ResponseCodeType.NODE_RESPONSE_ERROR => "node: response error",
-                ResponseCodeType.NODE_NETWORK_EXCEPTION => "node: network exception",
-                ResponseCodeType.NODE_RESPONSE_TIMEDOUT => "node: response timed out",
-                ResponseCodeType.SVC_INVALID_CLIENT_ID => "service: invalid clientId",
-                ResponseCodeType.SVC_NOT_FOUND => "service: requested key not found",
-                ResponseCodeType.SVC_UNAVAILABLE => "service: unavailable",
+                ResponseCodeType.Ok => "ok",
+                ResponseCodeType.ServerException => "server error",
+                ResponseCodeType.NotFound => "not found",
+                ResponseCodeType.Forbidden => "forbidden",
+                ResponseCodeType.BadGateway => "bad gateway",
+                ResponseCodeType.BadRequest => "bad request",
+                ResponseCodeType.ServiceUnavailable => "service unavailable",
+                ResponseCodeType.MethodNotAllowed => "method not allowed",
+                ResponseCodeType.InvalidBody => "invalid body",
+                ResponseCodeType.NodeOperationFailed => "node: operation failed",
+                ResponseCodeType.NodeInvalidClientId => "node: invalid clientId",
+                ResponseCodeType.NodeRegLimit => "node: could not register more services",
+                ResponseCodeType.NodeLockTimeout => "node: lock timeout",
+                ResponseCodeType.NodeResponseError => "node: response error",
+                ResponseCodeType.NodeNetworkException => "node: network exception",
+                ResponseCodeType.NodeResponseTimedout => "node: response timed out",
+                ResponseCodeType.SvcInvalidClientId => "service: invalid clientId",
+                ResponseCodeType.SvcNotFound => "service: requested key not found",
+                ResponseCodeType.SvcUnavailable => "service: unavailable",
                 _ => "unknown",
             };
-        }
 
-        public static ResponsePacket MakeResponse(ResponseCodeType code, object data = null) => new ResponsePacket
-        {
-            Code = code,
-            Message = GetMessageByCode(code),
-            Data = data ?? "",
-        };
+        public static byte[] MakeRPCResponse(ResponseCodeType code, object data = null)
+            => (new ResponsePacket
+            {
+                Code = code,
+                Message = GetMessageByCode(code),
+                Data = (data != null ? Utils.JsonSerialize(data) : string.Empty),
+            }).ToByteArray();
 
-        public static bool MakeNodeRequest(object serializable, string clientId, string clientSecret, out NodeRequest packetOutbound)
+        public static object MakeResponse(ResponseCodeType code, object data = null)
+            => new
+            {
+                Code = code,
+                Message = GetMessageByCode(code),
+                Data = data ?? "",
+            };
+
+        public static bool MakeRPCRequestOut(object serializable, string clientId, string clientSecret, string remoteIp, int remotePort, Dictionary<string, string[]> remoteHeaders, out RPCRequestOut packetOutbound)
         {
-            string rawData = Utils.JsonSerialize(serializable);
             long timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds(); // 生成时间戳
             try
             {
+                RPCRequestOutPayload payload = new RPCRequestOutPayload
+                {
+                    RemoteIp = remoteIp,
+                    RemotePort = remotePort,
+                    RemoteHeaders = remoteHeaders,
+                    Data = serializable
+                };
+                string rawData = Utils.JsonSerialize(payload);
                 string signature = MakeSignature(rawData, clientId, clientSecret, timestamp);
-                packetOutbound = new NodeRequest
+                packetOutbound = new RPCRequestOut
                 {
                     Signature = signature,
                     Timestamp = timestamp,
-                    Data = rawData
+                    Data = rawData,
                 };
             }
             catch
@@ -69,7 +86,7 @@ namespace Collplex.Core
             return true;
         }
 
-        public static bool ValidateRPCRequest(RPCRequest request)
+        public static bool ValidateRPCRequest(RPCRequestIn request)
         {
             if (request == null
                 || string.IsNullOrEmpty(request.ClientId)
@@ -91,7 +108,7 @@ namespace Collplex.Core
         public static string MakeSignature(string data, string clientId, string clientSecret, long timestamp)
             => Utils.HmacSHA1Hash(data, timestamp.ToString() + clientId + clientSecret);
 
-        public static string GetRPCPayload(RPCRequest request, string clientSecret)
+        public static string GetRPCPayload(RPCRequestIn request, string clientSecret)
         {
             try
             {

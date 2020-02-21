@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using Google.Protobuf;
 using Collplex.Models;
 using Collplex.Models.Node;
-using System.Collections.Generic;
 
 namespace Collplex.Core
 {

@@ -1,0 +1,21 @@
+﻿syntax = "proto3";
+package Collplex.Models.Node;
+
+/* 此类是子节点向本中心节点发送的请求 */
+message RPCRequestIn {
+
+	/* 子节点请求签名 */
+	string signature = 1;
+
+	/* 子节点响应时间戳 */
+	int64 timestamp = 2;
+
+	/* 子节点应用ID */
+	string clientId = 3;
+
+	/* 子节点请求的业务 */
+	string action = 4;
+
+	/* 子节点交互所用到的 json 数据 */
+	string data = 5;
+}

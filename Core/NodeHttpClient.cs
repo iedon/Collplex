@@ -3,10 +3,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
+using Google.Protobuf;
 using Collplex.Models;
 using Collplex.Models.Node;
+using static Collplex.Models.ResponsePacket.Types;
 
 namespace Collplex.Core
 {
@@ -21,13 +24,14 @@ namespace Collplex.Core
         }
 
         /* 如果任务超时，会由 PostAsync Task 发出 TaskCanceledException */
-        public async Task<object> RequestNodeService(Uri nodeServiceUrl, NodePayload outboundRequest, int timeout, string clientId, string clientSecret)
+        public async Task<object> RequestNodeService(Uri nodeServiceUrl, object data, int timeout, string clientId, string clientSecret, string remoteIp, int remotePort, Dictionary<string, string[]> remoteHeaders)
         {
             Client.Timeout = TimeSpan.FromSeconds(timeout);
-            if (!PacketHandler.MakeNodeRequest(outboundRequest, clientId, clientSecret, out NodeRequest packetOutbound))
+            if (!PacketHandler.MakeRPCRequestOut(data, clientId, clientSecret, remoteIp, remotePort, remoteHeaders, out RPCRequestOut packetOutbound))
                 return null;
-
-            using var content = new StringContent(Utils.JsonSerialize(packetOutbound), Encoding.UTF8, Constants.JsonContentType);
+            
+            using var content = new ByteArrayContent(packetOutbound.ToByteArray());
+            content.Headers.ContentType = new MediaTypeHeaderValue(Constants.ProtobufContentType);
             using var response = await Client.PostAsync(nodeServiceUrl, content);
             if (!response.IsSuccessStatusCode)
             {
@@ -35,13 +39,13 @@ namespace Collplex.Core
             }
             try
             {
-                using Stream httpBody = await response.Content.ReadAsStreamAsync();
+                using var httpBody = await response.Content.ReadAsStreamAsync();
 
                 // 这里使用流解析响应数据包，提高性能
-                ResponsePacket responsePacket = await Utils.JsonDeserializeAsync<ResponsePacket>(httpBody);
-                if (responsePacket.Code != ResponseCodeType.OK) return null;
-   
-                return Utils.JsonDeserialize<object>(responsePacket.Data.ToString());
+                ResponsePacket responsePacket = ResponsePacket.Parser.ParseFrom(httpBody);
+                if (responsePacket.Code != ResponseCodeType.Ok) return null;
+
+                return Utils.JsonDeserialize<object>(responsePacket.Data);
             }
             catch
             {

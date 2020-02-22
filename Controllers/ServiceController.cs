@@ -129,7 +129,7 @@ namespace Collplex.Controllers
                 var remoteHeaders = new Dictionary<string, string[]>();
                 foreach (var header in HttpContext.Request.Headers)
                 {
-                    remoteHeaders.Add(header.Key, header.Value.ToArray());
+                    remoteHeaders.Add(header.Key.ToLower(), header.Value.ToArray());
                 }
                 var data = await httpClient.RequestNodeService(new Uri(serviceToUse.NodeUrl), request.Data, client.Timeout, request.ClientId, client.ClientSecret, HttpContext.Connection.RemoteIpAddress.ToString(), HttpContext.Connection.RemotePort, remoteHeaders);
                 if (data == null)

@@ -13,7 +13,9 @@ namespace Collplex.Models
         /* 请求的业务键 */
         public string Key { get; set; }
         /* 请求者 IP */
-        public string Ip { get; set; }
+        public string RemoteIp { get; set; }
+        /* 请求者端口 */
+        public int RemotePort { get; set; }
         /* 请求者 User-Agent */
         public string UA { get; set; }
         /* 请求者的请求数据体 */

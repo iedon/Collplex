@@ -12,13 +12,13 @@ namespace Collplex.Core
         /// 从指定的库与表中获取指定条件的数据
         /// </summary>
         /// <returns></returns>
-        Task<List<T>> GetListAsync(Expression<Func<T, bool>> predicate, string dbName, string tableName = "");
+        Task<List<T>> GetListAsync(Expression<Func<T, bool>> predicate, string dbName, string tableName = "", bool logRolling = false);
 
         /// <summary>
         /// 对指定的库与表中新增数据
         /// </summary>
         /// <returns></returns>
-        Task Add(List<T> list, string dbName, string tableName = "");
-        Task Add(T document, string dbName, string tableName = "");
+        Task Add(List<T> list, string dbName, string tableName = "", bool logRolling = false);
+        Task Add(T document, string dbName, string tableName = "", bool logRolling = false);
     }
 }

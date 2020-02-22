@@ -92,7 +92,6 @@ namespace Collplex.Core
                 || string.IsNullOrEmpty(request.ClientId)
                 || string.IsNullOrEmpty(request.Signature)
                 || request.Timestamp <= 0
-                || string.IsNullOrEmpty(request.Action)
                 || string.IsNullOrEmpty(request.Data))
                 return false;
 

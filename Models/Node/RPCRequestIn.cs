@@ -24,14 +24,17 @@ namespace Collplex.Models.Node {
     static RPCRequestInReflection() {
       byte[] descriptorData = global::System.Convert.FromBase64String(
           string.Concat(
-            "ChJSUENSZXF1ZXN0SW4ucHJvdG8SFENvbGxwbGV4Lk1vZGVscy5Ob2RlImQK",
-            "DFJQQ1JlcXVlc3RJbhIRCglzaWduYXR1cmUYASABKAkSEQoJdGltZXN0YW1w",
-            "GAIgASgDEhAKCGNsaWVudElkGAMgASgJEg4KBmFjdGlvbhgEIAEoCRIMCgRk",
-            "YXRhGAUgASgJYgZwcm90bzM="));
+            "ChJSUENSZXF1ZXN0SW4ucHJvdG8SFENvbGxwbGV4Lk1vZGVscy5Ob2RlIt8B",
+            "CgxSUENSZXF1ZXN0SW4SEQoJc2lnbmF0dXJlGAEgASgJEhEKCXRpbWVzdGFt",
+            "cBgCIAEoAxIQCghjbGllbnRJZBgDIAEoCRJACgZhY3Rpb24YBCABKA4yMC5D",
+            "b2xscGxleC5Nb2RlbHMuTm9kZS5SUENSZXF1ZXN0SW4uUlBDQWN0aW9uVHlw",
+            "ZRIMCgRkYXRhGAUgASgJIkcKDVJQQ0FjdGlvblR5cGUSDAoIUkVHSVNURVIQ",
+            "ABIICgRMSVNUEAESBwoDR0VUEAISCAoEQ0FMTBADEgsKB0RFU1RST1kQBGIG",
+            "cHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::Collplex.Models.Node.RPCRequestIn), global::Collplex.Models.Node.RPCRequestIn.Parser, new[]{ "Signature", "Timestamp", "ClientId", "Action", "Data" }, null, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::Collplex.Models.Node.RPCRequestIn), global::Collplex.Models.Node.RPCRequestIn.Parser, new[]{ "Signature", "Timestamp", "ClientId", "Action", "Data" }, null, new[]{ typeof(global::Collplex.Models.Node.RPCRequestIn.Types.RPCActionType) }, null, null)
           }));
     }
     #endregion
@@ -123,15 +126,15 @@ namespace Collplex.Models.Node {
 
     /// <summary>Field number for the "action" field.</summary>
     public const int ActionFieldNumber = 4;
-    private string action_ = "";
+    private global::Collplex.Models.Node.RPCRequestIn.Types.RPCActionType action_ = global::Collplex.Models.Node.RPCRequestIn.Types.RPCActionType.Register;
     /// <summary>
     /// 子节点请求的业务 
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public string Action {
+    public global::Collplex.Models.Node.RPCRequestIn.Types.RPCActionType Action {
       get { return action_; }
       set {
-        action_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+        action_ = value;
       }
     }
 
@@ -176,7 +179,7 @@ namespace Collplex.Models.Node {
       if (Signature.Length != 0) hash ^= Signature.GetHashCode();
       if (Timestamp != 0L) hash ^= Timestamp.GetHashCode();
       if (ClientId.Length != 0) hash ^= ClientId.GetHashCode();
-      if (Action.Length != 0) hash ^= Action.GetHashCode();
+      if (Action != global::Collplex.Models.Node.RPCRequestIn.Types.RPCActionType.Register) hash ^= Action.GetHashCode();
       if (Data.Length != 0) hash ^= Data.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
@@ -203,9 +206,9 @@ namespace Collplex.Models.Node {
         output.WriteRawTag(26);
         output.WriteString(ClientId);
       }
-      if (Action.Length != 0) {
-        output.WriteRawTag(34);
-        output.WriteString(Action);
+      if (Action != global::Collplex.Models.Node.RPCRequestIn.Types.RPCActionType.Register) {
+        output.WriteRawTag(32);
+        output.WriteEnum((int) Action);
       }
       if (Data.Length != 0) {
         output.WriteRawTag(42);
@@ -228,8 +231,8 @@ namespace Collplex.Models.Node {
       if (ClientId.Length != 0) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(ClientId);
       }
-      if (Action.Length != 0) {
-        size += 1 + pb::CodedOutputStream.ComputeStringSize(Action);
+      if (Action != global::Collplex.Models.Node.RPCRequestIn.Types.RPCActionType.Register) {
+        size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) Action);
       }
       if (Data.Length != 0) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(Data);
@@ -254,7 +257,7 @@ namespace Collplex.Models.Node {
       if (other.ClientId.Length != 0) {
         ClientId = other.ClientId;
       }
-      if (other.Action.Length != 0) {
+      if (other.Action != global::Collplex.Models.Node.RPCRequestIn.Types.RPCActionType.Register) {
         Action = other.Action;
       }
       if (other.Data.Length != 0) {
@@ -283,8 +286,8 @@ namespace Collplex.Models.Node {
             ClientId = input.ReadString();
             break;
           }
-          case 34: {
-            Action = input.ReadString();
+          case 32: {
+            Action = (global::Collplex.Models.Node.RPCRequestIn.Types.RPCActionType) input.ReadEnum();
             break;
           }
           case 42: {
@@ -294,6 +297,21 @@ namespace Collplex.Models.Node {
         }
       }
     }
+
+    #region Nested types
+    /// <summary>Container for nested types declared in the RPCRequestIn message type.</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static partial class Types {
+      public enum RPCActionType {
+        [pbr::OriginalName("REGISTER")] Register = 0,
+        [pbr::OriginalName("LIST")] List = 1,
+        [pbr::OriginalName("GET")] Get = 2,
+        [pbr::OriginalName("CALL")] Call = 3,
+        [pbr::OriginalName("DESTROY")] Destroy = 4,
+      }
+
+    }
+    #endregion
 
   }
 

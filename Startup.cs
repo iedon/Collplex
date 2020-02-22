@@ -55,13 +55,11 @@ namespace Collplex
             // 配置其他信息
             Constants.NodeDefaultWeight = Configuration.GetValue<uint>("NodeDefaultWeight", 1);
             Constants.SessionContextGCIntervalSeconds = Configuration.GetValue<uint>("SessionContextGCIntervalSeconds", 3600);
-            Constants.WriteSessionContextToRedisIntervalSeconds = Configuration.GetValue<uint>("WriteSessionContextToRedisIntervalSeconds", 0);
+            Constants.EnableSessionContextStat = Configuration.GetValue<bool>("EnableSessionContextStat", false);
             Constants.NodePacketInboundAntiReplaySeconds = Configuration.GetValue<uint>("NodePacketInboundAntiReplaySeconds", 600);
             Constants.AppName = Assembly.GetEntryAssembly().GetName().Name;
             Constants.AppVersion = Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
             Constants.NodeHttpClientUserAgent = Constants.AppName + "/" + Constants.AppVersion;
-            Constants.LogUserRequest = Configuration.GetValue<bool>("LogUserRequest", false);
-            Constants.LogUserPayload = Configuration.GetValue<bool>("LogUserPayload", false);
             Constants.NodeHttpClientLifeTimeSeconds = Configuration.GetValue<double>("NodeHttpClientLifeTimeSeconds", 300);
 
             // 注入子节点访问客户端

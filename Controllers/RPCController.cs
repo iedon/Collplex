@@ -2,15 +2,18 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Google.Protobuf;
 using Collplex.Core;
 using Collplex.Models;
 using Collplex.Models.Node;
 using Collplex.Core.LoadBalancing;
 using static Collplex.Models.ResponsePacket.Types;
+using static Collplex.Models.Node.NodeData.Types;
+using static Collplex.Models.Node.RPCRequestIn.Types;
 
 namespace Collplex.Controllers
 {
+    /* RPC 业务控制器 */
+    [Produces(Constants.ProtobufContentType)]
     public class RPCController : AppBaseController
     {
         public RPCController() {}
@@ -49,9 +52,8 @@ namespace Collplex.Controllers
             if (jsonPayload == null)
                 return File(PacketHandler.MakeRPCResponse(ResponseCodeType.BadRequest), Constants.ProtobufContentType);
 
-            RPCActionEnum action = Enum.Parse<RPCActionEnum>(request.Action.ToUpper());
-            switch (action) {
-                case RPCActionEnum.REGISTER:
+            switch (request.Action) {
+                case RPCActionType.Register:
                 {
                     RPCRegisterServicePayload payload;
                     try
@@ -64,9 +66,9 @@ namespace Collplex.Controllers
                         }
                     return File(await RegisterService(request.ClientId, client, payload), Constants.ProtobufContentType);
                     }
-                case RPCActionEnum.LIST:
+                case RPCActionType.List:
                     return File(await ListServices(request.ClientId), Constants.ProtobufContentType);
-                case RPCActionEnum.GET:
+                case RPCActionType.Get:
                 {
                     RPCGetServicePayload payload;
                     try
@@ -76,10 +78,10 @@ namespace Collplex.Controllers
                     catch
                     {
                         return File(PacketHandler.MakeRPCResponse(ResponseCodeType.InvalidBody), Constants.ProtobufContentType);
-                    }
+                        }
                     return File(await GetService(request.ClientId, payload), Constants.ProtobufContentType);
                     }
-                case RPCActionEnum.CALL:
+                case RPCActionType.Call:
                 {
                     RPCCallServicePayload payload;
                     try
@@ -92,7 +94,7 @@ namespace Collplex.Controllers
                         }
                     return File(await CallService(request.ClientId, payload), Constants.ProtobufContentType);
                     }
-                case RPCActionEnum.DESTROY:
+                case RPCActionType.Destroy:
                 {
                     RPCDestroyServicePayload payload;
                     try
@@ -135,7 +137,7 @@ namespace Collplex.Controllers
 
                     serviceToRegister.Key = serviceToRegister.Key.ToLower(); // 业务 Key 强制小写
 
-                    NodeData.Types.NodeService service = null;
+                    NodeService service = null;
                     foreach (var currentService in nodeData.Services) // 在注册中心中已经存在的 Service
                     {
                         if (currentService.Key == serviceToRegister.Key && currentService.NodeUrl == serviceToRegister.NodeUrl)
@@ -151,7 +153,7 @@ namespace Collplex.Controllers
                         if (client.MaxServices != 0 && nodeData.Services.Count >= client.MaxServices)
                             return PacketHandler.MakeRPCResponse(ResponseCodeType.NodeRegLimit);
 
-                        service = new NodeData.Types.NodeService
+                        service = new NodeService
                         {
                             Hash = Utils.SHA1Hash(serviceToRegister.Key + serviceToRegister.NodeUrl),
                             Key = serviceToRegister.Key,
@@ -206,7 +208,7 @@ namespace Collplex.Controllers
                     if (string.IsNullOrEmpty(serviceToDestroy.Key))
                         return PacketHandler.MakeRPCResponse(ResponseCodeType.InvalidBody);
 
-                    NodeData.Types.NodeService service = null;
+                    NodeService service = null;
                     foreach (var currentService in nodeData.Services) // 在注册中心中已经存在的 Service
                     {
                         if (currentService.Key == serviceToDestroy.Key && currentService.NodeUrl == serviceToDestroy.NodeUrl)
@@ -252,7 +254,7 @@ namespace Collplex.Controllers
             {
                 return PacketHandler.MakeRPCResponse(ResponseCodeType.NodeOperationFailed);
             }
-            var relatedServices = new List<NodeData.Types.NodeService>();
+            var relatedServices = new List<NodeService>();
             foreach (var currentService in nodeData.Services)
             {
                 if (currentService.Key == data.Key) relatedServices.Add(currentService);
@@ -278,7 +280,7 @@ namespace Collplex.Controllers
                 return PacketHandler.MakeRPCResponse(ResponseCodeType.NodeOperationFailed);
             }
 
-            var relatedServices = new List<NodeData.Types.NodeService>();
+            var relatedServices = new List<NodeService>();
             foreach (var currentService in nodeData.Services)
             {
                 if (currentService.Key == data.Key) relatedServices.Add(currentService);
@@ -294,7 +296,7 @@ namespace Collplex.Controllers
                     break;
                 }
             }
-            NodeData.Types.NodeService serviceToUse = LoadBalancer.Lease(loadBalancerType, relatedServices, keyContext, HttpContext.Connection.RemoteIpAddress.GetHashCode(), out _);
+            NodeService serviceToUse = LoadBalancer.Lease(loadBalancerType, relatedServices, keyContext, HttpContext.Connection.RemoteIpAddress.GetHashCode(), out _);
             if (serviceToUse == null) // 负载均衡器返回无可用业务备选 (业务已过期)
             {
                 return PacketHandler.MakeRPCResponse(ResponseCodeType.SvcUnavailable);

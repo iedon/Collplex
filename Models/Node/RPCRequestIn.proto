@@ -13,8 +13,16 @@ message RPCRequestIn {
 	/* 子节点应用ID */
 	string clientId = 3;
 
+	enum RPCActionType {
+        REGISTER = 0;
+        LIST = 1;
+        GET = 2;
+        CALL = 3;
+        DESTROY = 4;
+    }
+
 	/* 子节点请求的业务 */
-	string action = 4;
+	RPCActionType action = 4;
 
 	/* 子节点交互所用到的 json 数据 */
 	string data = 5;

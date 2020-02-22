@@ -29,9 +29,7 @@ namespace Collplex.Models.Node
         public int IncrementCurrentRequests() => Interlocked.Increment(ref currentRequests);
         public int DecrementCurrentRequests() => Interlocked.Decrement(ref currentRequests);
         public long IncrementFinishedRequests() => Interlocked.Increment(ref finishedRequests);
-        public long DecrementFinishedRequests() => Interlocked.Decrement(ref finishedRequests);
         public long IncrementFailedRequests() => Interlocked.Increment(ref failedRequests);
-        public long DecrementFailedRequests() => Interlocked.Decrement(ref failedRequests);
 
         public int GetCurrentLoadBalanceWeight() => currentLoadBalanceWeight;
         public int SetCurrentLoadBalanceWeight(int weight) => Interlocked.Exchange(ref currentLoadBalanceWeight, weight);

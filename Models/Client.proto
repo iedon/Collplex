@@ -19,6 +19,15 @@ message Client {
 	/* 允许中心节点请求子节点业务时的最大等待时间 */
 	int32 timeout = 5;
 
+	 /* 是否记录子节点请求 */
+	bool logUserRequest = 6;
+
+	/* logUserRequest 为 false 时，此项无效。是否记录子节点请求过来的数据体(Body)，如果为是，则用户访问日志中将记录用户的请求数据体 */
+	bool logUserPayload = 7;
+
+	/* logUserRequest 为 false 时，此项无效。是否按天切割记录访问日志 */
+	bool logRolling = 8;
+
 	message LoadBalancerConfiguration {
 		string key = 1;
 		enum LoadBalanceType {
@@ -30,5 +39,5 @@ message Client {
 		}
 		LoadBalanceType type = 2;
 	}
-	repeated LoadBalancerConfiguration loadBalancerConfigurations = 6;
+	repeated LoadBalancerConfiguration loadBalancerConfigurations = 9;
 }

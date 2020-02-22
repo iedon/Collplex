@@ -15,6 +15,7 @@ using static Collplex.Models.Node.NodeData.Types;
 namespace Collplex.Controllers
 {
     // 业务控制器
+    [Produces(Constants.JsonContentType)]
     public class ServiceController : AppBaseController
     {
         private readonly ILogger<ServiceController> logger;
@@ -56,7 +57,7 @@ namespace Collplex.Controllers
             }
 
             Stopwatch requestWatch = null;
-            if (Constants.LogUserRequest)
+            if (client.LogUserRequest)
             {
                 // 初始化请求计时器并开始计时处理时间
                 requestWatch = new Stopwatch();
@@ -67,20 +68,21 @@ namespace Collplex.Controllers
             string userAgentSingle = string.Empty;
             if (HttpContext.Request.Headers.TryGetValue("user-agent", out var uaHeaders) && uaHeaders.Count > 0)
             {
-                // 因为 ASP.NET 允许最终用户有多个头，而 UA 正常情况下只发送一个，因此只取一个值
+                // 因为 HTTP 规范允许有多个相同的头，而 UA 正常情况下只发送一个，因此只取一个值
                 userAgentSingle = uaHeaders.ToArray()[0];
             }
 
             ServiceLog requestLog = null;
-            if (Constants.LogUserRequest)
+            if (client.LogUserRequest)
             {
                 requestLog = new ServiceLog()
                 {
                     RequestBegin = DateTime.Now,
                     Key = request.Key,
-                    Ip = HttpContext.Connection.RemoteIpAddress.ToString(),
+                    RemoteIp = HttpContext.Connection.RemoteIpAddress.ToString(),
+                    RemotePort = HttpContext.Connection.RemotePort,
                     UA = userAgentSingle,
-                    Data = (Constants.LogUserPayload && request.Data != null) ? request.Data.ToString() : string.Empty,
+                    Data = (client.LogUserPayload && request.Data != null) ? request.Data.ToString() : string.Empty,
                     ResponseCode = ResponseCodeType.Ok,
                 };
             }
@@ -88,20 +90,20 @@ namespace Collplex.Controllers
             NodeData nodeData = await NodeHelper.GetNodeData(request.ClientId);
             if (nodeData == null)
             {
-                if (Constants.LogUserRequest) LogRequest(requestLog, request.ClientId, ResponseCodeType.SvcNotFound, requestWatch);
+                if (client.LogUserRequest) LogRequest(requestLog, request.ClientId, ResponseCodeType.SvcNotFound, requestWatch, client.LogRolling);
                 return PacketHandler.MakeResponse(ResponseCodeType.SvcNotFound);
             }
 
             // 找到业务 Key 与其注册的所有 URL 以便负载均衡器选择
-            var services = new List<NodeData.Types.NodeService>();
-            foreach (NodeData.Types.NodeService svc in nodeData.Services)
+            var services = new List<NodeService>();
+            foreach (NodeService svc in nodeData.Services)
             {
                 if (svc.Key == request.Key && svc.Private == false) services.Add(svc);
             }
 
             if (services.Count == 0) // 服务未注册(一个URL都没有注册)
             {
-                if (Constants.LogUserRequest) LogRequest(requestLog, request.ClientId, ResponseCodeType.SvcNotFound, requestWatch);
+                if (client.LogUserRequest) LogRequest(requestLog, request.ClientId, ResponseCodeType.SvcNotFound, requestWatch, client.LogRolling);
                 return PacketHandler.MakeResponse(ResponseCodeType.SvcNotFound);
             }
 
@@ -117,7 +119,7 @@ namespace Collplex.Controllers
             NodeService serviceToUse = LoadBalancer.Lease(loadBalancerType, services, keyContext, HttpContext.Connection.RemoteIpAddress.GetHashCode(), out var hitSessionContext);
             if (serviceToUse == null) // 负载均衡器返回无可用业务备选 (业务已过期)
             {
-                if (Constants.LogUserRequest) LogRequest(requestLog, request.ClientId, ResponseCodeType.SvcUnavailable, requestWatch);
+                if (client.LogUserRequest) LogRequest(requestLog, request.ClientId, ResponseCodeType.SvcUnavailable, requestWatch, client.LogRolling);
                 return PacketHandler.MakeResponse(ResponseCodeType.SvcUnavailable);
             }
 
@@ -132,24 +134,24 @@ namespace Collplex.Controllers
                 var data = await httpClient.RequestNodeService(new Uri(serviceToUse.NodeUrl), request.Data, client.Timeout, request.ClientId, client.ClientSecret, HttpContext.Connection.RemoteIpAddress.ToString(), HttpContext.Connection.RemotePort, remoteHeaders);
                 if (data == null)
                 {
-                    if (Constants.LogUserRequest) LogRequest(requestLog, request.ClientId, ResponseCodeType.NodeResponseError, requestWatch);
+                    if (client.LogUserRequest) LogRequest(requestLog, request.ClientId, ResponseCodeType.NodeResponseError, requestWatch, client.LogRolling);
                     hitSessionContext.IncrementFailedRequests();
                     return PacketHandler.MakeResponse(ResponseCodeType.NodeResponseError);
                 }
 
-                if (Constants.LogUserRequest) LogRequest(requestLog, request.ClientId, ResponseCodeType.Ok, requestWatch);
+                if (client.LogUserRequest) LogRequest(requestLog, request.ClientId, ResponseCodeType.Ok, requestWatch, client.LogRolling);
                 return PacketHandler.MakeResponse(ResponseCodeType.Ok, data);
             }
             catch (TaskCanceledException)
             {
                 hitSessionContext.IncrementFailedRequests();
-                if (Constants.LogUserRequest) LogRequest(requestLog, request.ClientId, ResponseCodeType.NodeResponseTimedout, requestWatch);
+                if (client.LogUserRequest) LogRequest(requestLog, request.ClientId, ResponseCodeType.NodeResponseTimedout, requestWatch, client.LogRolling);
                 return PacketHandler.MakeResponse(ResponseCodeType.NodeResponseTimedout);
             }
             catch
             {
                 hitSessionContext.IncrementFailedRequests();
-                if (Constants.LogUserRequest) LogRequest(requestLog, request.ClientId, ResponseCodeType.NodeNetworkException, requestWatch);
+                if (client.LogUserRequest) LogRequest(requestLog, request.ClientId, ResponseCodeType.NodeNetworkException, requestWatch, client.LogRolling);
                 return PacketHandler.MakeResponse(ResponseCodeType.NodeNetworkException);
             }
             finally
@@ -159,14 +161,14 @@ namespace Collplex.Controllers
             }
         }
 
-        private void LogRequest(ServiceLog requestLog, string clientId, ResponseCodeType responseCode, Stopwatch requestWatch)
+        private async void LogRequest(ServiceLog requestLog, string clientId, ResponseCodeType responseCode, Stopwatch requestWatch, bool logRolling)
         {
             try
             {
-                requestWatch.Stop();
                 requestLog.ResponseCode = responseCode;
+                requestWatch.Stop();
                 requestLog.TimeTakenMs = requestWatch.ElapsedMilliseconds;
-                mongoRepository.Add(requestLog, clientId, requestLog.GetType().Name);
+                await mongoRepository.Add(requestLog, clientId, requestLog.GetType().Name, logRolling);
             }
             catch (Exception exception)
             {

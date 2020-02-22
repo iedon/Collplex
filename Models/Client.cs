@@ -24,21 +24,23 @@ namespace Collplex.Models {
     static ClientReflection() {
       byte[] descriptorData = global::System.Convert.FromBase64String(
           string.Concat(
-            "CgxDbGllbnQucHJvdG8SD0NvbGxwbGV4Lk1vZGVscyK8AwoGQ2xpZW50EgwK",
+            "CgxDbGllbnQucHJvdG8SD0NvbGxwbGV4Lk1vZGVscyKABAoGQ2xpZW50EgwK",
             "BG5hbWUYASABKAkSFAoMY2xpZW50U2VjcmV0GAIgASgJEhMKC21heFNlcnZp",
             "Y2VzGAMgASgFEhoKEnJlZ0ludGVydmFsU2Vjb25kcxgEIAEoBRIPCgd0aW1l",
-            "b3V0GAUgASgFElUKGmxvYWRCYWxhbmNlckNvbmZpZ3VyYXRpb25zGAYgAygL",
-            "MjEuQ29sbHBsZXguTW9kZWxzLkNsaWVudC5Mb2FkQmFsYW5jZXJDb25maWd1",
-            "cmF0aW9uGvQBChlMb2FkQmFsYW5jZXJDb25maWd1cmF0aW9uEgsKA2tleRgB",
-            "IAEoCRJPCgR0eXBlGAIgASgOMkEuQ29sbHBsZXguTW9kZWxzLkNsaWVudC5M",
-            "b2FkQmFsYW5jZXJDb25maWd1cmF0aW9uLkxvYWRCYWxhbmNlVHlwZSJ5Cg9M",
-            "b2FkQmFsYW5jZVR5cGUSEwoPTk9fTE9BRF9CQUxBTkNFEAASHQoZU01PT1RI",
-            "X1dFSUdIVF9ST1VORF9ST0JJThABEhIKDkxFQVNUX1JFUVVFU1RTEAISCgoG",
-            "UkFORE9NEAMSEgoOU09VUkNFX0lQX0hBU0gQBGIGcHJvdG8z"));
+            "b3V0GAUgASgFEhYKDmxvZ1VzZXJSZXF1ZXN0GAYgASgIEhYKDmxvZ1VzZXJQ",
+            "YXlsb2FkGAcgASgIEhIKCmxvZ1JvbGxpbmcYCCABKAgSVQoabG9hZEJhbGFu",
+            "Y2VyQ29uZmlndXJhdGlvbnMYCSADKAsyMS5Db2xscGxleC5Nb2RlbHMuQ2xp",
+            "ZW50LkxvYWRCYWxhbmNlckNvbmZpZ3VyYXRpb24a9AEKGUxvYWRCYWxhbmNl",
+            "ckNvbmZpZ3VyYXRpb24SCwoDa2V5GAEgASgJEk8KBHR5cGUYAiABKA4yQS5D",
+            "b2xscGxleC5Nb2RlbHMuQ2xpZW50LkxvYWRCYWxhbmNlckNvbmZpZ3VyYXRp",
+            "b24uTG9hZEJhbGFuY2VUeXBlInkKD0xvYWRCYWxhbmNlVHlwZRITCg9OT19M",
+            "T0FEX0JBTEFOQ0UQABIdChlTTU9PVEhfV0VJR0hUX1JPVU5EX1JPQklOEAES",
+            "EgoOTEVBU1RfUkVRVUVTVFMQAhIKCgZSQU5ET00QAxISCg5TT1VSQ0VfSVBf",
+            "SEFTSBAEYgZwcm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::Collplex.Models.Client), global::Collplex.Models.Client.Parser, new[]{ "Name", "ClientSecret", "MaxServices", "RegIntervalSeconds", "Timeout", "LoadBalancerConfigurations" }, null, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::Collplex.Models.Client.Types.LoadBalancerConfiguration), global::Collplex.Models.Client.Types.LoadBalancerConfiguration.Parser, new[]{ "Key", "Type" }, null, new[]{ typeof(global::Collplex.Models.Client.Types.LoadBalancerConfiguration.Types.LoadBalanceType) }, null, null)})
+            new pbr::GeneratedClrTypeInfo(typeof(global::Collplex.Models.Client), global::Collplex.Models.Client.Parser, new[]{ "Name", "ClientSecret", "MaxServices", "RegIntervalSeconds", "Timeout", "LogUserRequest", "LogUserPayload", "LogRolling", "LoadBalancerConfigurations" }, null, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::Collplex.Models.Client.Types.LoadBalancerConfiguration), global::Collplex.Models.Client.Types.LoadBalancerConfiguration.Parser, new[]{ "Key", "Type" }, null, new[]{ typeof(global::Collplex.Models.Client.Types.LoadBalancerConfiguration.Types.LoadBalanceType) }, null, null)})
           }));
     }
     #endregion
@@ -78,6 +80,9 @@ namespace Collplex.Models {
       maxServices_ = other.maxServices_;
       regIntervalSeconds_ = other.regIntervalSeconds_;
       timeout_ = other.timeout_;
+      logUserRequest_ = other.logUserRequest_;
+      logUserPayload_ = other.logUserPayload_;
+      logRolling_ = other.logRolling_;
       loadBalancerConfigurations_ = other.loadBalancerConfigurations_.Clone();
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
@@ -157,10 +162,52 @@ namespace Collplex.Models {
       }
     }
 
+    /// <summary>Field number for the "logUserRequest" field.</summary>
+    public const int LogUserRequestFieldNumber = 6;
+    private bool logUserRequest_;
+    /// <summary>
+    /// 是否记录子节点请求 
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public bool LogUserRequest {
+      get { return logUserRequest_; }
+      set {
+        logUserRequest_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "logUserPayload" field.</summary>
+    public const int LogUserPayloadFieldNumber = 7;
+    private bool logUserPayload_;
+    /// <summary>
+    /// logUserRequest 为 false 时，此项无效。是否记录子节点请求过来的数据体(Body)，如果为是，则用户访问日志中将记录用户的请求数据体 
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public bool LogUserPayload {
+      get { return logUserPayload_; }
+      set {
+        logUserPayload_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "logRolling" field.</summary>
+    public const int LogRollingFieldNumber = 8;
+    private bool logRolling_;
+    /// <summary>
+    /// logUserRequest 为 false 时，此项无效。是否按天切割记录访问日志 
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public bool LogRolling {
+      get { return logRolling_; }
+      set {
+        logRolling_ = value;
+      }
+    }
+
     /// <summary>Field number for the "loadBalancerConfigurations" field.</summary>
-    public const int LoadBalancerConfigurationsFieldNumber = 6;
+    public const int LoadBalancerConfigurationsFieldNumber = 9;
     private static readonly pb::FieldCodec<global::Collplex.Models.Client.Types.LoadBalancerConfiguration> _repeated_loadBalancerConfigurations_codec
-        = pb::FieldCodec.ForMessage(50, global::Collplex.Models.Client.Types.LoadBalancerConfiguration.Parser);
+        = pb::FieldCodec.ForMessage(74, global::Collplex.Models.Client.Types.LoadBalancerConfiguration.Parser);
     private readonly pbc::RepeatedField<global::Collplex.Models.Client.Types.LoadBalancerConfiguration> loadBalancerConfigurations_ = new pbc::RepeatedField<global::Collplex.Models.Client.Types.LoadBalancerConfiguration>();
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public pbc::RepeatedField<global::Collplex.Models.Client.Types.LoadBalancerConfiguration> LoadBalancerConfigurations {
@@ -185,6 +232,9 @@ namespace Collplex.Models {
       if (MaxServices != other.MaxServices) return false;
       if (RegIntervalSeconds != other.RegIntervalSeconds) return false;
       if (Timeout != other.Timeout) return false;
+      if (LogUserRequest != other.LogUserRequest) return false;
+      if (LogUserPayload != other.LogUserPayload) return false;
+      if (LogRolling != other.LogRolling) return false;
       if(!loadBalancerConfigurations_.Equals(other.loadBalancerConfigurations_)) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
@@ -197,6 +247,9 @@ namespace Collplex.Models {
       if (MaxServices != 0) hash ^= MaxServices.GetHashCode();
       if (RegIntervalSeconds != 0) hash ^= RegIntervalSeconds.GetHashCode();
       if (Timeout != 0) hash ^= Timeout.GetHashCode();
+      if (LogUserRequest != false) hash ^= LogUserRequest.GetHashCode();
+      if (LogUserPayload != false) hash ^= LogUserPayload.GetHashCode();
+      if (LogRolling != false) hash ^= LogRolling.GetHashCode();
       hash ^= loadBalancerConfigurations_.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
@@ -231,6 +284,18 @@ namespace Collplex.Models {
         output.WriteRawTag(40);
         output.WriteInt32(Timeout);
       }
+      if (LogUserRequest != false) {
+        output.WriteRawTag(48);
+        output.WriteBool(LogUserRequest);
+      }
+      if (LogUserPayload != false) {
+        output.WriteRawTag(56);
+        output.WriteBool(LogUserPayload);
+      }
+      if (LogRolling != false) {
+        output.WriteRawTag(64);
+        output.WriteBool(LogRolling);
+      }
       loadBalancerConfigurations_.WriteTo(output, _repeated_loadBalancerConfigurations_codec);
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
@@ -254,6 +319,15 @@ namespace Collplex.Models {
       }
       if (Timeout != 0) {
         size += 1 + pb::CodedOutputStream.ComputeInt32Size(Timeout);
+      }
+      if (LogUserRequest != false) {
+        size += 1 + 1;
+      }
+      if (LogUserPayload != false) {
+        size += 1 + 1;
+      }
+      if (LogRolling != false) {
+        size += 1 + 1;
       }
       size += loadBalancerConfigurations_.CalculateSize(_repeated_loadBalancerConfigurations_codec);
       if (_unknownFields != null) {
@@ -281,6 +355,15 @@ namespace Collplex.Models {
       }
       if (other.Timeout != 0) {
         Timeout = other.Timeout;
+      }
+      if (other.LogUserRequest != false) {
+        LogUserRequest = other.LogUserRequest;
+      }
+      if (other.LogUserPayload != false) {
+        LogUserPayload = other.LogUserPayload;
+      }
+      if (other.LogRolling != false) {
+        LogRolling = other.LogRolling;
       }
       loadBalancerConfigurations_.Add(other.loadBalancerConfigurations_);
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
@@ -314,7 +397,19 @@ namespace Collplex.Models {
             Timeout = input.ReadInt32();
             break;
           }
-          case 50: {
+          case 48: {
+            LogUserRequest = input.ReadBool();
+            break;
+          }
+          case 56: {
+            LogUserPayload = input.ReadBool();
+            break;
+          }
+          case 64: {
+            LogRolling = input.ReadBool();
+            break;
+          }
+          case 74: {
             loadBalancerConfigurations_.AddEntriesFrom(input, _repeated_loadBalancerConfigurations_codec);
             break;
           }

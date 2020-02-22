@@ -22,13 +22,13 @@ namespace Collplex.Core
         /// <typeparam name="TEntity"></typeparam>
         /// <param name="datetime"></param>
         /// <returns></returns>
-        private static async Task<IMongoCollection<TEntity>> GetCollectionAsync<TEntity>(string dbName, string tableName = "") where TEntity : class
+        private static async Task<IMongoCollection<TEntity>> GetCollectionAsync<TEntity>(string dbName, string tableName = "", bool logRolling = false) where TEntity : class
         {
             var DbContext = Constants.MongoDB.GetDatabase(dbName);
             string date = DateTime.Now.ToString("yyyy-MM-dd");
 
-            // 获取集合名称，使用的标准是在实体类型名后添加日期
-            string collectionName = tableName + "_" + date;
+            // 获取集合名称，如果启用日志滚动切割，则在实体类型名后添加日期
+            string collectionName = logRolling ? (tableName + "_" + date) : tableName;
 
             // 如果集合不存在，那么创建集合
             if (await CollectionExistsAsync<TEntity>(dbName, collectionName) == false)
@@ -58,9 +58,9 @@ namespace Collplex.Core
         /// 从指定的库与表中获取指定条件的数据
         /// </summary>
         /// <returns></returns>
-        public async Task<List<T>> GetListAsync(Expression<Func<T, bool>> predicate, string dbName, string tableName)
+        public async Task<List<T>> GetListAsync(Expression<Func<T, bool>> predicate, string dbName, string tableName, bool logRolling = false)
         {
-            var collection = await GetCollectionAsync<T>(dbName, tableName);
+            var collection = await GetCollectionAsync<T>(dbName, tableName, logRolling);
             return collection.AsQueryable().Where(predicate).ToList();
         }
 
@@ -69,9 +69,9 @@ namespace Collplex.Core
         /// 对指定的库与表中新增多条数据
         /// </summary>
         /// <returns></returns>
-        public async Task Add(List<T> list, string dbName, string tableName = "")
+        public async Task Add(List<T> list, string dbName, string tableName = "", bool logRolling = false)
         {
-            var collection = await GetCollectionAsync<T>(dbName, tableName);
+            var collection = await GetCollectionAsync<T>(dbName, tableName, logRolling);
             await collection.InsertManyAsync(list);
         }
 
@@ -79,9 +79,9 @@ namespace Collplex.Core
         /// 对指定的库与表中新增单条数据
         /// </summary>
         /// <returns></returns>
-        public async Task Add(T document, string dbName, string tableName = "")
+        public async Task Add(T document, string dbName, string tableName = "", bool logRolling = false)
         {
-            var collection = await GetCollectionAsync<T>(dbName, tableName);
+            var collection = await GetCollectionAsync<T>(dbName, tableName, logRolling);
             await collection.InsertOneAsync(document);
         }
     }

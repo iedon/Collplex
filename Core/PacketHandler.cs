@@ -47,7 +47,7 @@ namespace Collplex.Core
             {
                 Code = code,
                 Message = GetMessageByCode(code),
-                Data = data ?? "",
+                Data = data ?? string.Empty,
             };
 
         public static bool MakeRPCRequestOut(object serializable, string clientId, string clientSecret, string remoteIp, int remotePort, Dictionary<string, string[]> remoteHeaders, out RPCRequestOut packetOutbound)

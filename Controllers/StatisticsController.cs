@@ -25,7 +25,7 @@ namespace Collplex.Controllers
                     foreach (var hash in service.Value)
                     {
                         hashMap.Add(hash.Key, new Statistics {
-                             CurrentRequests =- hash.Value.GetCurrentRequests(),
+                             CurrentRequests = hash.Value.GetCurrentRequests(),
                              FailedRequests = hash.Value.GetFailedRequests(),
                              FinishedRequests = hash.Value.GetFinishedRequests()
                         });

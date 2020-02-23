@@ -12,7 +12,7 @@ namespace Collplex.Core
     {
         public static string HmacSHA1Hash(string message, string secret)
         {
-            secret ??= "";
+            secret ??= string.Empty;
             var encoding = new UTF8Encoding();
             byte[] keyByte = encoding.GetBytes(secret);
             byte[] messageBytes = encoding.GetBytes(message);

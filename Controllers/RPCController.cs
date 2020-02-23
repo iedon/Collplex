@@ -296,12 +296,12 @@ namespace Collplex.Controllers
                     break;
                 }
             }
-            NodeService serviceToUse = LoadBalancer.Lease(loadBalancerType, relatedServices, keyContext, HttpContext.Connection.RemoteIpAddress.GetHashCode(), out _);
+            NodeService serviceToUse = LoadBalancer.Lease(loadBalancerType, relatedServices, keyContext, HttpContext.Connection.RemoteIpAddress.GetHashCode(), out var hitSessionContext);
             if (serviceToUse == null) // 负载均衡器返回无可用业务备选 (业务已过期)
             {
                 return PacketHandler.MakeRPCResponse(ResponseCodeType.SvcUnavailable);
             }
-
+            hitSessionContext.IncrementFinishedRequests();
             return PacketHandler.MakeRPCResponse(ResponseCodeType.Ok, serviceToUse.NodeUrl);
         }
     }

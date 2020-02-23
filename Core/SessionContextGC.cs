@@ -57,6 +57,7 @@ namespace Collplex.Core
                 foreach (var activeClient in activeClients)
                 {
                     var registeredServices = LoadBalancer.SessionContexts.Where(l => l.Key == activeClient).FirstOrDefault().Value.Select(k => k.Key);
+                    var activeServices = new List<string>();
                     foreach (var registeredService in registeredServices)
                     {
                         bool found = false;
@@ -65,7 +66,11 @@ namespace Collplex.Core
                         {
                             foreach (var service in nodeData.Services)
                             {
-                                if (service.Key == registeredService) found = true;
+                                if (service.Key == registeredService)
+                                {
+                                    found = true;
+                                    activeServices.Add(registeredService);
+                                }
                             }
                         }
                         if (!found)
@@ -73,6 +78,28 @@ namespace Collplex.Core
                             LoadBalancer.SessionContexts.Where(l => l.Key == activeClient).FirstOrDefault().Value.TryRemove(registeredService, out _);
                         }
 
+                    }
+
+                    // 从会话上下文中找到并删除在可用业务中不再存在的负载均衡节点(即同业务键名不同业务URL)
+                    foreach (var activeService in activeServices)
+                    {
+                        var registeredHashes = LoadBalancer.SessionContexts.Where(l => l.Key == activeClient).FirstOrDefault().Value.Where(s => s.Key == activeService).FirstOrDefault().Value.Select(h => h.Key);
+                        foreach (var registeredHash in registeredHashes)
+                        {
+                            bool found = false;
+                            var nodeData = await NodeHelper.GetNodeData(activeClient);
+                            if (nodeData != null)
+                            {
+                                foreach (var service in nodeData.Services)
+                                {
+                                    if (service.Hash == registeredHash) found = true;
+                                }
+                            }
+                            if (!found)
+                            {
+                                LoadBalancer.SessionContexts.Where(l => l.Key == activeClient).FirstOrDefault().Value.Where(s => s.Key == activeService).FirstOrDefault().Value.TryRemove(registeredHash, out _);
+                            }
+                        }
                     }
                 }
 

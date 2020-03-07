@@ -9,6 +9,7 @@ using Collplex.Core.LoadBalancing;
 using static Collplex.Models.ResponsePacket.Types;
 using static Collplex.Models.Node.NodeData.Types;
 using static Collplex.Models.Node.RPCRequestIn.Types;
+using static Collplex.Models.Client.Types.LoadBalancerConfiguration.Types;
 
 namespace Collplex.Controllers
 {
@@ -63,9 +64,9 @@ namespace Collplex.Controllers
                     catch
                     {
                         return File(PacketHandler.MakeRPCResponse(ResponseCodeType.InvalidBody), Constants.ProtobufContentType);
-                        }
-                    return File(await RegisterService(request.ClientId, client, payload), Constants.ProtobufContentType);
                     }
+                    return File(await RegisterService(request.ClientId, client, payload), Constants.ProtobufContentType);
+                }
                 case RPCActionType.List:
                     return File(await ListServices(request.ClientId), Constants.ProtobufContentType);
                 case RPCActionType.Get:
@@ -78,9 +79,9 @@ namespace Collplex.Controllers
                     catch
                     {
                         return File(PacketHandler.MakeRPCResponse(ResponseCodeType.InvalidBody), Constants.ProtobufContentType);
-                        }
-                    return File(await GetService(request.ClientId, payload), Constants.ProtobufContentType);
                     }
+                    return File(await GetService(request.ClientId, payload), Constants.ProtobufContentType);
+                }
                 case RPCActionType.Call:
                 {
                     RPCCallServicePayload payload;
@@ -91,9 +92,9 @@ namespace Collplex.Controllers
                     catch
                     {
                         return File(PacketHandler.MakeRPCResponse(ResponseCodeType.InvalidBody), Constants.ProtobufContentType);
-                        }
-                    return File(await CallService(request.ClientId, payload), Constants.ProtobufContentType);
                     }
+                    return File(await CallService(request.ClientId, payload), Constants.ProtobufContentType);
+                }
                 case RPCActionType.Destroy:
                 {
                     RPCDestroyServicePayload payload;
@@ -104,9 +105,9 @@ namespace Collplex.Controllers
                     catch
                     {
                         return File(PacketHandler.MakeRPCResponse(ResponseCodeType.InvalidBody), Constants.ProtobufContentType);
-                        }
-                    return File(await DestroyService(request.ClientId, payload), Constants.ProtobufContentType);
                     }
+                    return File(await DestroyService(request.ClientId, payload), Constants.ProtobufContentType);
+                }
                 default: return File(PacketHandler.MakeRPCResponse(ResponseCodeType.BadRequest), Constants.ProtobufContentType);
             }
         }
@@ -287,7 +288,7 @@ namespace Collplex.Controllers
             }
 
             var keyContext = LoadBalancer.GetKeyContext(clientId, data.Key);
-            Client.Types.LoadBalancerConfiguration.Types.LoadBalanceType loadBalancerType = Client.Types.LoadBalancerConfiguration.Types.LoadBalanceType.NoLoadBalance;
+            LoadBalanceType loadBalancerType = LoadBalanceType.NoLoadBalance;
             foreach (var config in client.LoadBalancerConfigurations)
             {
                 if (config.Key == data.Key)
